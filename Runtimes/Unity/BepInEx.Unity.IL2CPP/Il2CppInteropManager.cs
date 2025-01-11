@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Preloader.Core;
@@ -27,6 +30,7 @@ using Il2CppInterop.HarmonySupport;
 using Il2CppInterop.Runtime.Startup;
 using LibCpp2IL;
 using Microsoft.Extensions.Logging;
+using Mono.Cecil;
 using MonoMod.Utils;
 using AssemblyDefinition = AsmResolver.DotNet.AssemblyDefinition;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -89,6 +93,25 @@ internal static partial class Il2CppInteropManager
          .AppendLine("{BepInEx} - Path to the BepInEx folder.")
          .AppendLine("{ProcessName} - Name of the current process")
          .ToString());
+    
+    private static readonly ConfigEntry<bool> PreloadIL2CPPInteropAssemblies = ConfigFile.CoreConfig.Bind(
+     "IL2CPP", "PreloadIL2CPPInteropAssemblies",
+     true,
+     new StringBuilder()
+         .AppendLine("Automatically load all interop assemblies right before loading plugins.")
+         .AppendLine("Some plugins may not work properly without this, but it may cause issues in some games.")
+         .ToString());
+
+    private static readonly ConfigEntry<string> GlobalMetadataPath = ConfigFile.CoreConfig.Bind(
+     "IL2CPP", "GlobalMetadataPath",
+     "{GameDataPath}/il2cpp_data/Metadata/global-metadata.dat",
+     new StringBuilder()
+         .AppendLine("The path to the IL2CPP metadata file.")
+         .AppendLine("Supports the following placeholders:")
+         .AppendLine("{BepInEx} - Path to the BepInEx folder.")
+         .AppendLine("{ProcessName} - Name of the current process")
+         .AppendLine("{GameDataPath} - Path to the game's Data folder.")
+         .ToString());
 
     private static readonly ManualLogSource Logger = BepInEx.Logging.Logger.CreateLogSource("InteropManager");
 
@@ -115,6 +138,8 @@ internal static partial class Il2CppInteropManager
     private static string UnityBaseLibsDirectory => Path.Combine(IL2CPPBasePath, "unity-libs");
 
     internal static string IL2CPPInteropAssemblyPath => Path.Combine(IL2CPPBasePath, "interop");
+
+    private static string RenameMapPath => Path.Combine(Paths.BepInExRootPath, "DeobfuscationMap.csv.gz");
 
     private static ILoggerFactory LoggerFactory { get; } = MSLoggerFactory.Create(b =>
     {
@@ -151,6 +176,11 @@ internal static partial class Il2CppInteropManager
                 HashString(md5, Path.GetFileName(file));
                 HashFile(md5, file);
             }
+
+        if (File.Exists(RenameMapPath))
+        {
+            HashFile(md5, RenameMapPath);
+        }
 
         // Hash some common dependencies as they can affect output
         HashString(md5, typeof(InteropAssemblyGenerator).Assembly.GetName().Version.ToString());
@@ -253,25 +283,30 @@ internal static partial class Il2CppInteropManager
         }
     }
 
-    private static void DownloadUnityAssemblies()
+    private static void DownloadUnityAssemblies() 
     {
         var unityVersion = UnityInfo.Version;
-        var source =
-            UnityBaseLibrariesSource.Value.Replace("{VERSION}",
-                                                   $"{unityVersion.Major}.{unityVersion.Minor}.{unityVersion.Build}");
-        
-        if (!string.IsNullOrEmpty(source))
-        {
-            Logger.LogMessage("Downloading unity base libraries from " + source);
+        var version = $"{unityVersion.Major}.{unityVersion.Minor}.{unityVersion.Build}";
+        var source = UnityBaseLibrariesSource.Value.Replace("{VERSION}", version);
+        if (string.IsNullOrEmpty(source)) return;
 
-            Directory.CreateDirectory(UnityBaseLibsDirectory);
-            Directory.EnumerateFiles(UnityBaseLibsDirectory, "*.dll").Do(File.Delete);
+        var uri = new Uri(source);
+        string file = Path.GetFileName(uri.AbsolutePath);
 
+        var baseFolder = Directory.CreateDirectory(UnityBaseLibsDirectory);
+        baseFolder.EnumerateFiles("*.dll").Do(a=>a.Delete());
+        var target = baseFolder.GetFiles(file).FirstOrDefault();
+        if (target != null) {
+            Logger.LogMessage($"Reading unity base libraries from file {source}");
+            using var fStream = target.OpenRead();
+            using var zipArchive = new ZipArchive(fStream, ZipArchiveMode.Read);
+            zipArchive.ExtractToDirectory(UnityBaseLibsDirectory);
+        } else {
+            Logger.LogMessage($"Downloading unity base libraries {source}");
             using var httpClient = new HttpClient();
             using var zipStream = httpClient.GetStreamAsync(source).GetAwaiter().GetResult();
-            using var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read);
-
             Logger.LogMessage("Extracting downloaded unity base libraries");
+            using var zipArchive = new ZipArchive(zipStream, ZipArchiveMode.Read);
             zipArchive.ExtractToDirectory(UnityBaseLibsDirectory);
         }
     }
@@ -371,5 +406,33 @@ internal static partial class Il2CppInteropManager
                               .AddLogger(logger)
                               .AddInteropAssemblyGenerator()
                               .Run();
+    }
+
+    internal static void PreloadInteropAssemblies()
+    {
+        if (!PreloadIL2CPPInteropAssemblies.Value)
+            return;
+
+        var sw = Stopwatch.StartNew();
+
+        var files = Directory.EnumerateFiles(IL2CPPInteropAssemblyPath);
+        var loaded = 0;
+        Parallel.ForEach(files, file =>
+        {
+            if (!file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)) return;
+            if (file.Equals("netstandard.dll", StringComparison.OrdinalIgnoreCase)) return;
+            if (file.Equals("Il2Cppnetstandard.dll", StringComparison.OrdinalIgnoreCase)) return;
+            try
+            {
+                Assembly.LoadFrom(file);
+                Interlocked.Increment(ref loaded);
+            }
+            catch (Exception e)
+            {
+                Logger.LogWarning($"Failed to preload {file} - {e}");
+            }
+        });
+
+        Logger.LogDebug($"Preloaded {loaded} interop assemblies in {sw.ElapsedMilliseconds}ms");
     }
 }
