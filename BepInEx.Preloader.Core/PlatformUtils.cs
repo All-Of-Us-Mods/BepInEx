@@ -1,8 +1,5 @@
 using System;
-using System.IO;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using MonoMod.Utils;
 
 namespace BepInEx.Preloader.Core;
 
@@ -32,13 +29,16 @@ internal static class PlatformUtils
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
 
-    private static bool Is(this Platform current, Platform expected) => (current & expected) == expected;
+    // private static bool Is(this Platform current, Platform expected) => (current & expected) == expected;
 
     /// <summary>
     ///     Recreation of MonoMod's PlatformHelper.DeterminePlatform method, but with libc calls instead of creating processes.
     /// </summary>
     public static void SetPlatform()
     {
+        // we can assume platform is android.
+        
+        /*
         var current = Platform.Unknown;
 
         // For old Mono, get from a private property to accurately get the platform.
@@ -123,11 +123,11 @@ internal static class PlatformUtils
         {
             // Detect ARM based on PE info or uname.
             typeof(object).Module.GetPEKind(out var peKind, out var machine);
-            if (machine == (ImageFileMachine) 0x01C4 /* ARM, .NET Framework 4.5 */)
+            if (machine == (ImageFileMachine) 0x01C4 ARM, .NET Framework 4.5)
                 current |= Platform.ARM;
         }
 
-        PlatformHelper.Current = current;
+        PlatformHelper.Current = current;*/
     }
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

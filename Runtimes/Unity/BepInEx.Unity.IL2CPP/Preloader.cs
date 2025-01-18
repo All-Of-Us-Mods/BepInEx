@@ -8,7 +8,6 @@ using BepInEx.Preloader.Core.Logging;
 using BepInEx.Preloader.Core.Patching;
 using BepInEx.Preloader.RuntimeFixes;
 using BepInEx.Unity.Common;
-using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 
@@ -52,15 +51,6 @@ public static class Preloader
             Logger.Log(LogLevel.Debug, $"Interop assembly directory: {Il2CppInteropManager.IL2CPPInteropAssemblyPath}");
             Logger.Log(LogLevel.Debug, $"BepInEx root path: {Paths.BepInExRootPath}");
 
-            if (PlatformHelper.Is(Platform.Wine) && !Environment.Is64BitProcess)
-            {
-                if (!NativeLibrary.TryGetExport(NativeLibrary.Load("ntdll"), "RtlRestoreContext", out var _))
-                {
-                    Logger.Log(LogLevel.Warning,
-                               "Your wine version doesn't support CoreCLR properly, expect crashes! Upgrade to wine 7.16 or higher.");
-                }
-            }
-
             NativeLibrary.SetDllImportResolver(typeof(Il2CppInterop.Runtime.IL2CPP).Assembly, DllImportResolver);
 
             Il2CppInteropManager.Initialize();
@@ -96,7 +86,7 @@ public static class Preloader
 
     private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)
     {
-        if (libraryName == "GameAssembly")
+        if (libraryName is "GameAssembly" or "libil2cpp")
         {
             return NativeLibrary.Load(Il2CppInteropManager.GameAssemblyPath, assembly, searchPath);
         }

@@ -1,23 +1,39 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
-using BepInEx;
 using BepInEx.Preloader.Core;
-using BepInEx.Unity.IL2CPP;
 using BepInEx.Unity.IL2CPP.Utils;
-using MonoMod.Utils;
 
-// ReSharper disable once CheckNamespace
-namespace Doorstop;
+namespace BepInEx.Unity.IL2CPP;
 
 internal static class Entrypoint
 {
+    public struct Data
+    {
+        public string DataPath;
+        public string AuLibsPath;
+        public string RedirectLibsPath;
+    }
+
     /// <summary>
     ///     The main entrypoint of BepInEx, called from Doorstop.
     /// </summary>
-    public static void Start()
+    public static void Start(IntPtr arg, int argLength)
     {
+        var data = Marshal.PtrToStructure<Data>(arg);
+        var dotnet = Path.Join(data.DataPath, "dotnet");
+        var bepinPath = Path.Join(data.DataPath, "BepInEx", "Core");
+        var auIl2Cpp = Path.Join(data.AuLibsPath, "libil2cpp.so");
+
+        // override doorstop env vars cuz we arent using them.
+        Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);
+        Environment.SetEnvironmentVariable("DOORSTOP_MANAGED_FOLDER_DIR", dotnet);
+        Environment.SetEnvironmentVariable("DOORSTOP_PROCESS_PATH", auIl2Cpp);
+        Environment.SetEnvironmentVariable("DOORSTOP_DLL_SEARCH_DIRS", dotnet+Path.PathSeparator+bepinPath);
+
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ??
                                  $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
@@ -30,8 +46,7 @@ internal static class Entrypoint
             silentExceptionLog =
                 Path.Combine(Path.GetDirectoryName(EnvVars.DOORSTOP_PROCESS_PATH), silentExceptionLog);
 
-            var mutexId = Utility.HashStrings(Process.GetCurrentProcess().ProcessName, EnvVars.DOORSTOP_PROCESS_PATH,
-                                              typeof(Entrypoint).FullName);
+            var mutexId = Utility.HashStrings(Process.GetCurrentProcess().ProcessName, EnvVars.DOORSTOP_PROCESS_PATH, typeof(Entrypoint).FullName);
 
             mutex = new Mutex(false, $"Global\\{mutexId}");
             mutex.WaitOne();
@@ -44,11 +59,7 @@ internal static class Entrypoint
 
             try
             {
-                if (PlatformHelper.Is(Platform.Windows))
-                {
-                    MessageBox.Show("Failed to start BepInEx", "BepInEx");
-                }
-                else if (NotifySend.IsSupported)
+                if (NotifySend.IsSupported)
                 {
                     NotifySend.Send("Failed to start BepInEx", "Check logs for details");
                 }

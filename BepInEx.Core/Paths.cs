@@ -102,9 +102,7 @@ public static class Paths
         ExecutablePath = executablePath;
         ProcessName = Path.GetFileNameWithoutExtension(executablePath);
 
-        GameRootPath = PlatformHelper.Is(Platform.MacOS)
-                           ? Utility.ParentDirectory(executablePath, 4)
-                           : Path.GetDirectoryName(executablePath);
+        GameRootPath = Path.GetDirectoryName(executablePath);
 
         GameDataPath = managedPath != null && gameDataRelativeToManaged
                            ? Path.GetDirectoryName(managedPath)
@@ -119,7 +117,7 @@ public static class Paths
         BepInExAssemblyPath = Path.Combine(BepInExAssemblyDirectory,
                                            $"{Assembly.GetExecutingAssembly().GetName().Name}.dll");
         CachePath = Path.Combine(BepInExRootPath, "cache");
-        DllSearchPaths = (dllSearchPath ?? new string[0]).Concat(new[] { ManagedPath }).Distinct().ToArray();
+        DllSearchPaths = (dllSearchPath ?? []).Concat([ManagedPath]).Distinct().ToArray();
     }
 
     internal static void SetPluginPath(string pluginPath) =>
