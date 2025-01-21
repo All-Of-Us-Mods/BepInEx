@@ -3,14 +3,14 @@ using System.Runtime.InteropServices;
 
 namespace BepInEx.Unity.IL2CPP.Hook;
 
-public static class BruthaInterop
+public static unsafe partial class BruthaInterop
 {
-    [DllImport("brutha", EntryPoint = "write_line", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern void write_line([MarshalAs(UnmanagedType.LPStr)] string message);
+    [LibraryImport("brutha", EntryPoint = "write_line", StringMarshalling = StringMarshalling.Utf16)]
+    public static unsafe partial void write_line([MarshalAs(UnmanagedType.LPStr)] string message);
 
-    [DllImport("brutha", EntryPoint = "hook", CallingConvention = CallingConvention.Cdecl)]
-    public static extern IntPtr hook(IntPtr target, IntPtr detour);
+    [LibraryImport("brutha", EntryPoint = "hook")]
+    public static unsafe partial IntPtr hook(IntPtr target, IntPtr detour);
 
-    [DllImport("brutha", EntryPoint = "unhook", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void unhook(IntPtr target);
+    [LibraryImport("brutha", EntryPoint = "unhook")]
+    public static unsafe partial void unhook(IntPtr target);
 }

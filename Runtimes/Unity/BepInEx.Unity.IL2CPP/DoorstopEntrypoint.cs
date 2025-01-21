@@ -39,19 +39,18 @@ internal static class Entrypoint
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ??
                                  $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
-        Mutex mutex = null;
+        //Mutex mutex = null;
 
         try
         {
             EnvVars.LoadVars();
 
-            silentExceptionLog =
-                Path.Combine(Path.GetDirectoryName(EnvVars.DOORSTOP_PROCESS_PATH), silentExceptionLog);
+            silentExceptionLog = Path.Combine(data.DataPath, silentExceptionLog);
 
-            var mutexId = Utility.HashStrings(Process.GetCurrentProcess().ProcessName, EnvVars.DOORSTOP_PROCESS_PATH, typeof(Entrypoint).FullName);
+            //var mutexId = Utility.HashStrings(Process.GetCurrentProcess().ProcessName, EnvVars.DOORSTOP_PROCESS_PATH, typeof(Entrypoint).FullName);
 
-            mutex = new Mutex(false, $"Global\\{mutexId}");
-            mutex.WaitOne();
+            //mutex = new Mutex(false, $"Global\\{mutexId}");
+            //mutex.WaitOne();
 
             UnityPreloaderRunner.PreloaderMain();
         }
@@ -80,7 +79,7 @@ internal static class Entrypoint
         }
         finally
         {
-            mutex?.ReleaseMutex();
+            //mutex?.ReleaseMutex();
         }
 
         return Marshal.GetFunctionPointerForDelegate(IL2CPPChainloader.Instance.Execute);

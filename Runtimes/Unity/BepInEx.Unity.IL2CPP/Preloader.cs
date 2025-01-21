@@ -22,8 +22,6 @@ public static class Preloader
 
     public static void Run()
     {
-        try
-        {
             HarmonyBackendFix.Initialize();
             ConsoleSetOutFix.Apply();
             UnityInfo.Initialize(Paths.ExecutablePath, Paths.GameDataPath);
@@ -75,13 +73,7 @@ public static class Preloader
             Chainloader = new IL2CPPChainloader();
 
             Chainloader.Initialize();
-        }
-        catch (Exception ex)
-        {
-            Log.Log(LogLevel.Fatal, ex);
 
-            throw;
-        }
     }
 
     private static IntPtr DllImportResolver(string libraryName, Assembly assembly, DllImportSearchPath? searchPath)

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using BepInEx.Unity.IL2CPP.Hook;
 
 namespace BepInEx.IL2CPP.RuntimeFixes;
 
@@ -28,15 +29,11 @@ internal static class RedirectStdErrFix
     private static extern bool SetStdHandle(int nStdHandle, nint hConsoleOutput);
     */
 
-    // using our custom "doorstop" replacement
-    [DllImport("brutha", EntryPoint = "write_line", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-    public static extern void write_line([MarshalAs(UnmanagedType.LPStr)] string message);
-
     public static void Apply()
     {
         // custom solution, redirecting stuff to our android thingy.
-        Console.SetOut(new CustomWriter(write_line));
-        Console.SetError(new CustomWriter(write_line));
+        Console.SetOut(new CustomWriter(BruthaInterop.write_line));
+        Console.SetError(new CustomWriter(BruthaInterop.write_line));
 
         /*
         if (PlatformHelper.Is(Platform.Windows))

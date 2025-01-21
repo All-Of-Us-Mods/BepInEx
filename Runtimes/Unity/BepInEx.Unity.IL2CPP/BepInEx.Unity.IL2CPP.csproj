@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Description>BepInEx support library for Il2Cpp games</Description>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <OutputPath>$(BuildDir)/Unity.IL2CPP</OutputPath>
