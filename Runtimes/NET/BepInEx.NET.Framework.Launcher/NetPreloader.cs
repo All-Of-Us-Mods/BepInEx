@@ -14,6 +14,7 @@ using BepInEx.Preloader.Core.Logging;
 using BepInEx.Preloader.Core.Patching;
 using HarmonyLib;
 using Mono.Cecil;
+using MonoMod.Utils;
 
 namespace BepInEx.NET.Framework.Launcher;
 
@@ -65,6 +66,12 @@ public static class NetPreloader
 
         foreach (var searchDir in Program.ResolveDirectories)
             TypeLoader.SearchDirectories.Add(searchDir);
+
+        if (PlatformDetection.OS is OSKind.Windows)
+        {
+            AddDllDirectory(Paths.GameRootPath);
+            SetDllDirectory(Paths.GameRootPath);
+        }
 
         Logger.Sources.Add(TraceLogSource.CreateSource());
 

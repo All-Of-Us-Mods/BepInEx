@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using BepInEx.Configuration;
 using BepInEx.Unix;
+using MonoMod.Utils;
 
 namespace BepInEx;
 
@@ -95,9 +96,12 @@ public static class ConsoleManager
 
     public static void Initialize(bool alreadyActive, bool useManagedEncoder)
     {
-        // assuming we are on android, so linux driver should be used
-        Driver = new LinuxConsoleDriver();
-        Driver.Initialize(alreadyActive, useManagedEncoder);
+        if (PlatformDetection.OS is not (OSKind.Windows or OSKind.Wine or OSKind.Unknown))
+            Driver = new LinuxConsoleDriver();
+        else if (PlatformDetection.OS is OSKind.Windows or OSKind.Wine)
+            Driver = new WindowsConsoleDriver();
+        else
+            throw new PlatformNotSupportedException("Was unable to determine console driver for platform " + PlatformDetection.OS);
     }
 
     private static void DriverCheck()

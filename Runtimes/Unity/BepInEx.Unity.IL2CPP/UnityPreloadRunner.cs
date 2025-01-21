@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Preloader.Core;
+using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 
@@ -12,8 +13,6 @@ internal static class UnityPreloaderRunner
     {
         var bepinPath =
             Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(EnvVars.DOORSTOP_INVOKE_DLL_PATH)));
-
-        PlatformUtils.SetPlatform();
 
         Paths.SetExecutablePath(EnvVars.DOORSTOP_PROCESS_PATH, bepinPath, EnvVars.DOORSTOP_MANAGED_FOLDER_DIR, false,
                                 EnvVars.DOORSTOP_DLL_SEARCH_DIRS);

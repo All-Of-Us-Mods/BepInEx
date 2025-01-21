@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using BepInEx.Core;
 using MonoMod.Utils;
 
 namespace BepInEx.Unix;

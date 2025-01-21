@@ -9,7 +9,6 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All"/>
         <PackageReference Include="HarmonyX" Version="2.13.0" />
-        <PackageReference Include="MonoMod.Common" Version="22.6.3.1" />
         <PackageReference Include="SemanticVersioning" Version="2.0.2"/>
         <PackageReference Include="MonoMod.Utils" Version="25.0.6-alpha.dev" />
     </ItemGroup>

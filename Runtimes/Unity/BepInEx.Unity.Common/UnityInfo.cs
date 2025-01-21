@@ -1,8 +1,10 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using AssetRipper.Primitives;
+using MonoMod.Utils;
 
 [assembly: InternalsVisibleTo("BepInEx.Unity.Mono.Preloader")]
 [assembly: InternalsVisibleTo("BepInEx.Unity.Mono")]
@@ -66,7 +68,23 @@ public static class UnityInfo
                 Version = version;
                 return;
             }
-
+        
+        if (PlatformDetection.OS is OSKind.Windows)
+            try
+            {
+                var version = FileVersionInfo.GetVersionInfo(PlayerPath);
+                // Parse manually because some games can also wipe the file version (so it's an empty string)
+                var simpleVersion = new Version(version.FileVersion);
+                Version = new UnityVersion((ushort) simpleVersion.Major, (ushort) simpleVersion.Minor,
+                                           (ushort) simpleVersion.Build);
+                return;
+            }
+            catch (Exception)
+            {
+                // Some games have version stripped or intentionally wrong
+                // In that case pass through
+            }
+        
         // We can't determine the version fully, so we'll try to guess
         // On UnityMono, UnityEngine.CoreModule.dll is present for post-2017
         // We'll also mark it as "experimental" so that we can detect this via logs
