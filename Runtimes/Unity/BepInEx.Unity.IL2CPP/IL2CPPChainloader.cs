@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using BepInEx.Preloader.Core;
 using BepInEx.Preloader.Core.Logging;
 using BepInEx.Unity.IL2CPP.Logging;
 using BepInEx.Unity.IL2CPP.Utils;
@@ -46,6 +47,21 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     ///     Occurs after a plugin is instantiated and just before <see cref="BasePlugin.Load"/> is called.
     /// </summary>
     public event Action<PluginInfo, Assembly, BasePlugin> PluginLoad;
+    
+    public override void Initialize(string gameExePath = null)
+    {
+        base.Initialize(gameExePath);
+        Instance = this;
+
+        if (!NativeLibrary.TryLoad("libil2cpp", typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
+        {
+            Logger.Log(LogLevel.Fatal,
+                       "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");
+            return;
+        }
+
+        PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke was patched in native.");
+    }
 
     protected override void InitializeLoggers()
     {

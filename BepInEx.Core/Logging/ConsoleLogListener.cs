@@ -14,7 +14,7 @@ public class ConsoleLogListener : ILogListener
      "Only displays the specified log levels in the console output.");
 
     /// <inheritdoc />
-    public LogLevel LogLevelFilter => ConfigConsoleDisplayedLevel.Value;
+    public LogLevel LogLevelFilter => LogLevel.All;// ConfigConsoleDisplayedLevel.Value;
 
     /// <inheritdoc />
     public void LogEvent(object sender, LogEventArgs eventArgs)
