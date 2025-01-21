@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 using BepInEx.Configuration;
+using BepInEx.Core.Console.Android;
 using BepInEx.Unix;
 using MonoMod.Utils;
 
@@ -96,7 +97,9 @@ public static class ConsoleManager
 
     public static void Initialize(bool alreadyActive, bool useManagedEncoder)
     {
-        if (PlatformDetection.OS is not (OSKind.Windows or OSKind.Wine or OSKind.Unknown))
+        if (PlatformDetection.OS is OSKind.Android)
+            Driver = new AndroidConsoleDriver();
+        else if (PlatformDetection.OS is not (OSKind.Windows or OSKind.Wine or OSKind.Unknown))
             Driver = new LinuxConsoleDriver();
         else if (PlatformDetection.OS is OSKind.Windows or OSKind.Wine)
             Driver = new WindowsConsoleDriver();

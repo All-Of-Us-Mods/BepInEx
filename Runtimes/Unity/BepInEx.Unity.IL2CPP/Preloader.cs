@@ -24,19 +24,23 @@ public static class Preloader
     public static void Run()
     {
             HarmonyBackendFix.Initialize();
-            ConsoleSetOutFix.Apply();
+            // ConsoleSetOutFix.Apply();
             UnityInfo.Initialize(Paths.ExecutablePath, Paths.GameDataPath);
 
             ConsoleManager.Initialize(false, true);
+            Logger.Listeners.Add(new ConsoleLogListener());
 
             PreloaderLog = new PreloaderConsoleListener();
             Logger.Listeners.Add(PreloaderLog);
 
+            RedirectStdErrFix.Apply();
+
+            /*
             if (ConsoleManager.ConsoleEnabled)
             {
                 ConsoleManager.CreateConsole();
                 Logger.Listeners.Add(new ConsoleLogListener());
-            }
+            }*/
 
             ChainloaderLogHelper.PrintLogInfo(Log);
 
@@ -56,7 +60,6 @@ public static class Preloader
                                "Your wine version doesn't support CoreCLR properly, expect crashes! Upgrade to wine 7.16 or higher.");
                 }
             }
-
 
             NativeLibrary.SetDllImportResolver(typeof(Il2CppInterop.Runtime.IL2CPP).Assembly, DllImportResolver);
 

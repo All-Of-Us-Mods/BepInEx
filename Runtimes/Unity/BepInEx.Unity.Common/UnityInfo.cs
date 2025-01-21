@@ -61,6 +61,14 @@ public static class UnityInfo
 
     private static void DetermineVersion()
     {
+        if (PlatformDetection.OS is OSKind.Android)
+        {
+            // Android doesn't have the version in the executable, so we can't determine it
+            // but we can manually set cuz im modding amogus and am lazy
+            Version = new UnityVersion(2020, 3, 45, UnityVersionType.Final, 1);
+            return;
+        }
+        
         // Try looking up first since it's more reliable
         foreach (var lookup in ManagerVersionLookup)
             if (lookup.TryLookup(out var version))
