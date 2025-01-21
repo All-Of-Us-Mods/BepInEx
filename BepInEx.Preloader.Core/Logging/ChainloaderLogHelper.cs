@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BepInEx.Logging;
-using MonoMod.Utils;
 
 namespace BepInEx.Preloader.Core.Logging;
 
@@ -71,6 +70,7 @@ public static class ChainloaderLogHelper
 
         // Not sure what it does on Linux. I think it returns the kernel version there too, but we already get the utsname structure from SetPlatform() regardless
 
+        /*
         if (PlatformHelper.Is(Platform.Windows))
         {
             osVersion = PlatformUtils.WindowsVersion;
@@ -124,19 +124,15 @@ public static class ChainloaderLogHelper
         }
 
         builder.Append(PlatformHelper.Is(Platform.Bits64) ? " 64-bit" : " 32-bit");
+*/
+        builder.Append("Linux");
 
-        if (PlatformHelper.Is(Platform.Android))
+        if (PlatformUtils.LinuxKernelVersion != null)
         {
-            builder.Append(" Android");
+            builder.AppendFormat(" (kernel {0})", PlatformUtils.LinuxKernelVersion);
         }
 
-        if (PlatformHelper.Is(Platform.ARM))
-        {
-            builder.Append(" ARM");
-
-            if (PlatformHelper.Is(Platform.Bits64))
-                builder.Append("64");
-        }
+        builder.Append(" Android ARM64");
 
         return builder.ToString();
     }

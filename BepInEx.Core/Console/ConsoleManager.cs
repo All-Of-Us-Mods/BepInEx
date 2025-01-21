@@ -3,8 +3,6 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 using BepInEx.Configuration;
-using BepInEx.Unix;
-using MonoMod.Utils;
 
 namespace BepInEx;
 
@@ -97,8 +95,8 @@ public static class ConsoleManager
     public static void Initialize(bool alreadyActive, bool useManagedEncoder)
     {
         // assuming we are on android, so linux driver should be used
-        Driver = new LinuxConsoleDriver();
-        Driver.Initialize(alreadyActive, useManagedEncoder);
+        //Driver = new LinuxConsoleDriver();
+        //Driver.Initialize(alreadyActive, useManagedEncoder);
     }
 
     private static void DriverCheck()

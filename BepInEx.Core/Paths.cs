@@ -1,7 +1,6 @@
 ﻿using System.IO;
 using System.Linq;
 using System.Reflection;
-using MonoMod.Utils;
 using SemanticVersioning;
 
 namespace BepInEx;

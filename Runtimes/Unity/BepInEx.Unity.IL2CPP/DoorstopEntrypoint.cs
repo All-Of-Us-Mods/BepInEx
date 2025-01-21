@@ -11,6 +11,8 @@ namespace BepInEx.Unity.IL2CPP;
 
 internal static class Entrypoint
 {
+    public delegate IntPtr StartDelegate(IntPtr arg, int argLength);
+    
     public struct Data
     {
         public string DataPath;
@@ -21,7 +23,7 @@ internal static class Entrypoint
     /// <summary>
     ///     The main entrypoint of BepInEx, called from Doorstop.
     /// </summary>
-    public static void Start(IntPtr arg, int argLength)
+    public static IntPtr Start(IntPtr arg, int argLength)
     {
         var data = Marshal.PtrToStructure<Data>(arg);
         var dotnet = Path.Join(data.DataPath, "dotnet");
@@ -66,7 +68,7 @@ internal static class Entrypoint
                 else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BEPINEX_FAIL_FAST")))
                 {
                     // Don't exit the game if we have no way of signaling to the user that a crash happened
-                    return;
+                    return IntPtr.Zero;
                 }
             }
             catch (Exception)
@@ -80,5 +82,7 @@ internal static class Entrypoint
         {
             mutex?.ReleaseMutex();
         }
+
+        return Marshal.GetFunctionPointerForDelegate(IL2CPPChainloader.Instance.Execute);
     }
 }
