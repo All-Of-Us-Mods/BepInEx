@@ -2,7 +2,9 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP.Hook;
+using MonoMod.Utils;
 
 namespace BepInEx.IL2CPP.RuntimeFixes;
 
@@ -14,8 +16,7 @@ internal static class RedirectStdErrFix
     private const int GENERIC_WRITE = 0x40000000;
     private const int CREATE_ALWAYS = 2;
     private const int FILE_ATTRIBUTE_NORMAL = 0x00000080;
-
-    /*
+    
     [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     private static extern nint CreateFile(string fileName,
                                           uint desiredAccess,
@@ -27,14 +28,14 @@ internal static class RedirectStdErrFix
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetStdHandle(int nStdHandle, nint hConsoleOutput);
-    */
+    
 
     public static void Apply()
     {
         // custom solution, redirecting stuff to our android thingy.
 
-        /*
-        if (PlatformHelper.Is(Platform.Windows))
+        
+        if (PlatformDetection.OS is OSKind.Windows)
         {
             var errorFile = CreateFile(Path.Combine(Paths.BepInExRootPath, "ErrorLog.log"), GENERIC_WRITE,
                                        FILE_SHARE_READ,
@@ -47,7 +48,7 @@ internal static class RedirectStdErrFix
 
             if (!SetStdHandle(STD_ERROR_HANDLE, errorFile))
                 Logger.Log(LogLevel.Warning, "Failed to redirect stderr; skipping error redirection");
-        }*/
+        }
         // On unix, we can generally redirect stderr to a file "normally" via piping
     }
 }

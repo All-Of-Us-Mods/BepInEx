@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using MonoMod.Utils;
 
 namespace BepInEx.Unity.Mono.Preloader.RuntimeFixes;
 
@@ -12,7 +13,8 @@ internal static class XTermFix
 
     public static void Apply()
     {
-        return;
+        if (PlatformDetection.OS is OSKind.Windows)
+            return;
 
         if (typeof(Console).Assembly.GetType("System.ConsoleDriver") == null)
             // Mono version is too old, use our own TTY implementation instead
