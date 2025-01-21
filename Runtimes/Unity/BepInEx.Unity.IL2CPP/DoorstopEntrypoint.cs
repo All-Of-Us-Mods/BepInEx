@@ -3,14 +3,38 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using BepInEx.Preloader.Core;
+using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 
 internal static class Entrypoint
 {
+    private class CustomWriter : TextWriter
+    {
+        private readonly Action<string> _writeAction;
+
+        public CustomWriter(Action<string> writeAction)
+        {
+            _writeAction = writeAction;
+        }
+
+        public override void WriteLine(string? value)
+        {
+            _writeAction(value ?? string.Empty);
+        }
+
+        public override void Write(char value)
+        {
+            _writeAction(value.ToString());
+        }
+
+        public override Encoding Encoding => Encoding.Unicode;
+    }
+    
     public delegate IntPtr StartDelegate(IntPtr arg, int argLength);
     
     public struct Data
@@ -25,6 +49,9 @@ internal static class Entrypoint
     /// </summary>
     public static IntPtr Start(IntPtr arg, int argLength)
     {
+        Console.SetOut(new CustomWriter(BruthaInterop.write_line));
+        Console.SetError(new CustomWriter(BruthaInterop.write_line));
+
         var data = Marshal.PtrToStructure<Data>(arg);
         var dotnet = Path.Join(data.DataPath, "dotnet");
         var bepinPath = Path.Join(data.DataPath, "BepInEx", "Core");

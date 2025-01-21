@@ -37,8 +37,6 @@ public static class Preloader
                 Logger.Listeners.Add(new ConsoleLogListener());
             }
 
-            RedirectStdErrFix.Apply();
-
             ChainloaderLogHelper.PrintLogInfo(Log);
 
             Logger.Log(LogLevel.Info, $"Running under Unity {UnityInfo.Version}");

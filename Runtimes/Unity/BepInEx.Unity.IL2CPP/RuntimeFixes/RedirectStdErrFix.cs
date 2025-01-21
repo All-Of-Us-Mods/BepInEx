@@ -32,8 +32,6 @@ internal static class RedirectStdErrFix
     public static void Apply()
     {
         // custom solution, redirecting stuff to our android thingy.
-        Console.SetOut(new CustomWriter(BruthaInterop.write_line));
-        Console.SetError(new CustomWriter(BruthaInterop.write_line));
 
         /*
         if (PlatformHelper.Is(Platform.Windows))
@@ -51,27 +49,5 @@ internal static class RedirectStdErrFix
                 Logger.Log(LogLevel.Warning, "Failed to redirect stderr; skipping error redirection");
         }*/
         // On unix, we can generally redirect stderr to a file "normally" via piping
-    }
-
-    private class CustomWriter : TextWriter
-    {
-        private readonly Action<string> _writeAction;
-
-        public CustomWriter(Action<string> writeAction)
-        {
-            _writeAction = writeAction;
-        }
-
-        public override void WriteLine(string? value)
-        {
-            _writeAction(value ?? string.Empty);
-        }
-
-        public override void Write(char value)
-        {
-            _writeAction(value.ToString());
-        }
-
-        public override Encoding Encoding => Encoding.Unicode;
     }
 }
