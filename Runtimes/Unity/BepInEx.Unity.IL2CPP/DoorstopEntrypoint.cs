@@ -42,6 +42,7 @@ internal static class Entrypoint
         Environment.SetEnvironmentVariable("DOORSTOP_PROCESS_PATH", auIl2Cpp);
         Environment.SetEnvironmentVariable("DOORSTOP_DLL_SEARCH_DIRS", dotnet+Path.PathSeparator+bepinPath);
         Environment.SetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH", auIl2Cpp);
+        Environment.SetEnvironmentVariable("METADATA_PATH", Path.Join(data.DataPath, "global-metadata.dat"));
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ?? $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";

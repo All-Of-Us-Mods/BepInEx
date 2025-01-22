@@ -13,7 +13,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using BepInEx.Preloader.Core;
 using BepInEx.Unity.Common;
 using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
@@ -30,7 +29,6 @@ using Il2CppInterop.HarmonySupport;
 using Il2CppInterop.Runtime.Startup;
 using LibCpp2IL;
 using Microsoft.Extensions.Logging;
-using Mono.Cecil;
 using MonoMod.Utils;
 using AssemblyDefinition = AsmResolver.DotNet.AssemblyDefinition;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -44,6 +42,8 @@ internal static partial class Il2CppInteropManager
     {
         InstructionSetRegistry.RegisterInstructionSet<X86InstructionSet>(DefaultInstructionSets.X86_32);
         InstructionSetRegistry.RegisterInstructionSet<X86InstructionSet>(DefaultInstructionSets.X86_64);
+        InstructionSetRegistry.RegisterInstructionSet<ArmV7InstructionSet>(DefaultInstructionSets.ARM_V7);
+        InstructionSetRegistry.RegisterInstructionSet<NewArmV8InstructionSet>(DefaultInstructionSets.ARM_V8);
         LibCpp2IlBinaryRegistry.RegisterBuiltInBinarySupport();
     }
 
@@ -311,7 +311,7 @@ internal static partial class Il2CppInteropManager
         }
     }
 
-    private static List<AsmResolver.DotNet.AssemblyDefinition> RunCpp2Il()
+    private static List<AssemblyDefinition> RunCpp2Il()
     {
         Logger.LogMessage("Running Cpp2IL to generate dummy assemblies");
 
@@ -321,21 +321,10 @@ internal static partial class Il2CppInteropManager
                                         "il2cpp_data",
                                         "Metadata",
                                         "global-metadata.dat");
-
-        var gameAssembly = GameAssemblyPath;
         
         if (PlatformDetection.OS is OSKind.Android)
         {
-            metadataPath = Path.Combine(Paths.GameRootPath,
-                                        Path.GetDirectoryName(EnvVars.DOORSTOP_PROCESS_PATH),
-                                        "..", "..",
-                                        "base.apk",
-                                        "assets",
-                                        "bin",
-                                        "Data",
-                                        "Managed",
-                                        "Metadata",
-                                        "global-metadata.dat");
+            metadataPath = Environment.GetEnvironmentVariable("METADATA_PATH");
         }
 
         var stopwatch = new Stopwatch();
@@ -352,10 +341,11 @@ internal static partial class Il2CppInteropManager
         Cpp2IL.Core.Logging.Logger.ErrorLog += (message, s) =>
             cpp2IlLogger.LogError($"[{s}] {message.Trim()}");
 
+        Assembly.Load("Disarm");
         var unityVersion = UnityInfo.Version;
-        Cpp2IlApi.InitializeLibCpp2Il(GameAssemblyPath, metadataPath, unityVersion, false);
+        Cpp2IlApi.InitializeLibCpp2Il(GameAssemblyPath, metadataPath, unityVersion);
 
-        List<Cpp2IlProcessingLayer> processingLayers = new() { new AttributeInjectorProcessingLayer(), };
+        List<Cpp2IlProcessingLayer> processingLayers = [new AttributeInjectorProcessingLayer()];
 
         foreach (var cpp2IlProcessingLayer in processingLayers)
         {

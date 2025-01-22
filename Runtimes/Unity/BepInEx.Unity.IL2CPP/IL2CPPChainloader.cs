@@ -54,6 +54,12 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke was patched in native.");
     }
 
+    public override void Execute()
+    {
+        Il2CppInteropManager.PreloadInteropAssemblies();
+        base.Execute();
+    }
+
     protected override void InitializeLoggers()
     {
         base.InitializeLoggers();
