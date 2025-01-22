@@ -263,14 +263,27 @@ internal static partial class Il2CppInteropManager
 
             AppDomain.CurrentDomain.AddCecilPlatformAssemblies(UnityBaseLibsDirectory);
             DownloadUnityAssemblies();
-            var asmResolverAssemblies = RunCpp2Il();
+            var dummyPath = Path.Combine(Paths.BepInExRootPath, "dummy");
 
-            if (DumpDummyAssemblies.Value)
+            List<AssemblyDefinition> asmResolverAssemblies;
+
+            if (Directory.Exists(dummyPath))
             {
-                var dummyPath = Path.Combine(Paths.BepInExRootPath, "dummy");
-                Directory.CreateDirectory(dummyPath);
-                foreach (var assemblyDefinition in asmResolverAssemblies)
-                    assemblyDefinition.Write(Path.Combine(dummyPath, $"{assemblyDefinition.Name}.dll"));
+                asmResolverAssemblies = Directory.EnumerateFiles(dummyPath, "*.dll")
+                    .Select(AssemblyDefinition.FromFile)
+                    .ToList();
+            }
+            else
+            {
+                asmResolverAssemblies = RunCpp2Il();
+
+                if (DumpDummyAssemblies.Value)
+                {
+                    Directory.CreateDirectory(dummyPath);
+                    foreach (var assemblyDefinition in asmResolverAssemblies)
+                        assemblyDefinition.Write(Path.Combine(dummyPath, $"{assemblyDefinition.Name}.dll"));
+                }
+                
             }
 
             RunIl2CppInteropGenerator(asmResolverAssemblies);
@@ -341,7 +354,6 @@ internal static partial class Il2CppInteropManager
         Cpp2IL.Core.Logging.Logger.ErrorLog += (message, s) =>
             cpp2IlLogger.LogError($"[{s}] {message.Trim()}");
 
-        Assembly.Load("Disarm");
         var unityVersion = UnityInfo.Version;
         Cpp2IlApi.InitializeLibCpp2Il(GameAssemblyPath, metadataPath, unityVersion);
 
