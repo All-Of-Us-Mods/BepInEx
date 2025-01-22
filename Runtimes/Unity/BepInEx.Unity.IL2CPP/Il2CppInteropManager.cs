@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using BepInEx.Preloader.Core;
 using BepInEx.Unity.Common;
 using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
@@ -26,6 +27,7 @@ using Il2CppInterop.HarmonySupport;
 using Il2CppInterop.Runtime.Startup;
 using LibCpp2IL;
 using Microsoft.Extensions.Logging;
+using MonoMod.Utils;
 using AssemblyDefinition = AsmResolver.DotNet.AssemblyDefinition;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using MSLoggerFactory = Microsoft.Extensions.Logging.LoggerFactory;
@@ -257,10 +259,10 @@ internal static partial class Il2CppInteropManager
         var source =
             UnityBaseLibrariesSource.Value.Replace("{VERSION}",
                                                    $"{unityVersion.Major}.{unityVersion.Minor}.{unityVersion.Build}");
-
+        
         if (!string.IsNullOrEmpty(source))
         {
-            Logger.LogMessage("Downloading unity base libraries");
+            Logger.LogMessage("Downloading unity base libraries from " + source);
 
             Directory.CreateDirectory(UnityBaseLibsDirectory);
             Directory.EnumerateFiles(UnityBaseLibsDirectory, "*.dll").Do(File.Delete);
@@ -278,11 +280,28 @@ internal static partial class Il2CppInteropManager
     {
         Logger.LogMessage("Running Cpp2IL to generate dummy assemblies");
 
+        
         var metadataPath = Path.Combine(Paths.GameRootPath,
                                         $"{Paths.ProcessName}_Data",
                                         "il2cpp_data",
                                         "Metadata",
                                         "global-metadata.dat");
+
+        var gameAssembly = GameAssemblyPath;
+        
+        if (PlatformDetection.OS is OSKind.Android)
+        {
+            metadataPath = Path.Combine(Paths.GameRootPath,
+                                        Path.GetDirectoryName(EnvVars.DOORSTOP_PROCESS_PATH),
+                                        "..", "..",
+                                        "base.apk",
+                                        "assets",
+                                        "bin",
+                                        "Data",
+                                        "Managed",
+                                        "Metadata",
+                                        "global-metadata.dat");
+        }
 
         var stopwatch = new Stopwatch();
         stopwatch.Start();

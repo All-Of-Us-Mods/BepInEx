@@ -15,8 +15,6 @@ namespace BepInEx.Unity.IL2CPP;
 
 public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 {
-    private static RuntimeInvokeDetourDelegate originalInvoke;
-
     private static readonly ConfigEntry<bool> ConfigUnityLogging = ConfigFile.CoreConfig.Bind(
      "Logging", "UnityLogListening",
      true,
@@ -53,13 +51,6 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         base.Initialize(gameExePath);
         Instance = this;
 
-        if (!NativeLibrary.TryLoad("libil2cpp", typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
-        {
-            Logger.Log(LogLevel.Fatal,
-                       "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");
-            return;
-        }
-
         PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke was patched in native.");
     }
 
@@ -80,12 +71,11 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
         var pluginInstance = (BasePlugin) Activator.CreateInstance(type);
 
+        Logger.Log(LogLevel.All, Il2CppInterop.Runtime.Il2CppType.From(typeof(object)).FullName);
+
         PluginLoad?.Invoke(pluginInfo, pluginAssembly, pluginInstance);
         pluginInstance.Load();
 
         return pluginInstance;
     }
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate IntPtr RuntimeInvokeDetourDelegate(IntPtr method, IntPtr obj, IntPtr parameters, IntPtr exc);
 }
