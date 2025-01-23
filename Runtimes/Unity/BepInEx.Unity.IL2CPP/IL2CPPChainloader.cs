@@ -132,8 +132,6 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
         var pluginInstance = (BasePlugin) Activator.CreateInstance(type);
 
-        Logger.Log(LogLevel.All, Il2CppInterop.Runtime.Il2CppType.From(typeof(object)).FullName);
-
         PluginLoad?.Invoke(pluginInfo, pluginAssembly, pluginInstance);
         pluginInstance.Load();
 
