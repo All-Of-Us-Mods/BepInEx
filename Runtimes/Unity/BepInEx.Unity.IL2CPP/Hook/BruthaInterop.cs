@@ -7,6 +7,7 @@ namespace BepInEx.Unity.IL2CPP.Hook;
 
 public static unsafe partial class BruthaInterop
 {
+    #if NET7_0_OR_GREATER
     [LibraryImport("brutha", EntryPoint = "write_log", StringMarshalling = StringMarshalling.Utf16)]
     public static unsafe partial void write_log([MarshalAs(UnmanagedType.LPStr)] string message);
 
@@ -18,7 +19,19 @@ public static unsafe partial class BruthaInterop
 
     [LibraryImport("brutha", EntryPoint = "unhook")]
     public static unsafe partial void unhook(IntPtr target);
+#else
+    [DllImport("brutha", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void write_log([MarshalAs(UnmanagedType.LPStr)] string message);
 
+    [DllImport("brutha", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void flush_log();
+
+    [DllImport("brutha", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern IntPtr hook(IntPtr target, IntPtr detour);
+
+    [DllImport("brutha", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    public static extern void unhook(IntPtr target);
+#endif
     
     public class InteropWriter : TextWriter
     {

@@ -391,6 +391,7 @@ internal static partial class Il2CppInteropManager
             ObfuscatedNamesRegex = !string.IsNullOrEmpty(ConfigUnhollowerDeobfuscationRegex.Value)
                                        ? new Regex(ConfigUnhollowerDeobfuscationRegex.Value)
                                        : null,
+            Parallel = true,
         };
 
         var renameMapLocation = Path.Combine(Paths.BepInExRootPath, "DeobfuscationMap.csv.gz");

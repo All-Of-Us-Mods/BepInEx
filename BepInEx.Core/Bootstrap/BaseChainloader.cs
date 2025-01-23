@@ -252,9 +252,8 @@ public abstract class BaseChainloader<TPlugin>
 
                 if (invalidProcessName)
                 {
-                    Logger.Log(LogLevel.Warning,
-                               $"Skipping [{pluginInfo}] because of process filters ({string.Join(", ", pluginInfo.Processes.Select(p => p.ProcessName).ToArray())})");
-                    continue;
+                    Logger.Log(LogLevel.Warning, $"[{pluginInfo}] does not match process filters ({string.Join(", ", pluginInfo.Processes.Select(p => p.ProcessName).ToArray())})");
+                    //continue;
                 }
 
                 loadedVersion = pluginInfo;
