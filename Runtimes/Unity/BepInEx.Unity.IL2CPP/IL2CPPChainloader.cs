@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -85,15 +86,16 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             return result;
         }
 
+        Mutex mutex = null;
         try
         {
             RuntimeInvokeDetour.Dispose();
-            PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched"); 
+            PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
 
             PreloaderLogger.Log.Log(LogLevel.Debug, "Resetting mono thread");
             BruthaInterop.thread_suspend_reload();
             PreloaderLogger.Log.Log(LogLevel.Debug, "Mono thread reset");
-            
+
             if (ConfigUnityLogging.Value)
             {
                 Logger.Sources.Add(new IL2CPPUnityLogSource());
@@ -101,7 +103,9 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                 Application.CallLogCallback("Test call after applying unity logging hook", "", LogType.Assert,
                                             true);
             }
-                
+
+            mutex = new Mutex(false, "Process_BepInExPreloaderMutex");
+            mutex.WaitOne();
             Il2CppInteropManager.PreloadInteropAssemblies();
 
             Instance.Execute();
@@ -110,6 +114,10 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         {
             Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
             Logger.Log(LogLevel.Error, ex);
+        }
+        finally
+        {
+            mutex?.ReleaseMutex();
         }
 
         return result;
