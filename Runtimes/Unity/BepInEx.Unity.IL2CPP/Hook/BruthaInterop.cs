@@ -8,10 +8,10 @@ namespace BepInEx.Unity.IL2CPP.Hook;
 public static unsafe partial class BruthaInterop
 {
     #if NET7_0_OR_GREATER
-    [LibraryImport("brutha", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("brutha", StringMarshalling = StringMarshalling.Utf8)]
     public static unsafe partial void write_log([MarshalAs(UnmanagedType.LPStr)] string message);
 
-    [LibraryImport("brutha", StringMarshalling = StringMarshalling.Utf16)]
+    [LibraryImport("brutha", StringMarshalling = StringMarshalling.Utf8)]
     public static unsafe partial void flush_log();
 
     [LibraryImport("brutha")]

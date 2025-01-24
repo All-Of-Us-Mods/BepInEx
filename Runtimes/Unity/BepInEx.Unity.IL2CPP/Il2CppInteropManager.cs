@@ -50,7 +50,7 @@ internal static partial class Il2CppInteropManager
     private static readonly ConfigEntry<bool> UpdateInteropAssemblies =
         ConfigFile.CoreConfig.Bind("IL2CPP",
                                    "UpdateInteropAssemblies",
-                                   true,
+                                   false,
                                    new StringBuilder()
                                        .AppendLine("Whether to run Il2CppInterop automatically to generate Il2Cpp support assemblies when they are outdated.")
                                        .AppendLine("If disabled assemblies in `BepInEx/interop` won't be updated between game or BepInEx updates!")

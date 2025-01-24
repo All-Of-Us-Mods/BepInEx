@@ -17,7 +17,6 @@ public unsafe class NativeDetour : IDetour
     {
         Target = target;
         Detour = Marshal.GetFunctionPointerForDelegate(detour);
-        Logger.Log(LogLevel.Debug, $"Creating detour from 0x{Target:X2} to 0x{Detour:X2}");
         Apply();
     }
 
@@ -28,7 +27,6 @@ public unsafe class NativeDetour : IDetour
             return;
         }
         OriginalTrampoline = BruthaInterop.hook(Target, Detour);
-        Logger.Log(LogLevel.Debug, $"Original: {Target:X}, Trampoline: {OriginalTrampoline:X}, diff: {Math.Abs(Target - OriginalTrampoline):X}");
     }
     
     public void Dispose()

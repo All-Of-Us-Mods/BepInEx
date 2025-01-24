@@ -11,11 +11,11 @@ internal class CacheDetourWrapper : IDetour
     public IntPtr Detour => wrapped.Detour;
     public IntPtr OriginalTrampoline => wrapped.OriginalTrampoline;
 
-    private readonly NativeDetour wrapped;
+    private readonly IDetour wrapped;
 
     private readonly List<object> cache = [];
 
-    public CacheDetourWrapper(NativeDetour wrapped, Delegate target)
+    public CacheDetourWrapper(IDetour wrapped, Delegate target)
     {
         this.wrapped = wrapped;
         cache.Add(target);

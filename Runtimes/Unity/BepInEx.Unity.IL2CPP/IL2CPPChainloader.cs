@@ -77,50 +77,43 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
     private static IntPtr OnInvokeMethod(IntPtr method, IntPtr obj, IntPtr parameters, IntPtr exc)
     {
-        var result = originalInvoke(method, obj, parameters, exc);
-     
         var methodName = Marshal.PtrToStringAnsi(Il2CppInterop.Runtime.IL2CPP.il2cpp_method_get_name(method));
-
-        if (methodName != "Internal_ActiveSceneChanged")
+        
+        if (methodName == "Internal_ActiveSceneChanged")
         {
-            return result;
-        }
+            Mutex mutex = null;
+            try
+            {
+                mutex = new Mutex(false, "Process_BepInExPreloaderMutex");
+                mutex.WaitOne();
+                PreloaderLogger.Log.Log(LogLevel.Debug, "Resetting mono thread");
+                BruthaInterop.thread_suspend_reload();
+                PreloaderLogger.Log.Log(LogLevel.Debug, "Mono thread reset");
 
-        Mutex mutex = null;
-        try
-        {
+                if (ConfigUnityLogging.Value)
+                {
+                    Logger.Sources.Add(new IL2CPPUnityLogSource());
+
+                    Application.CallLogCallback("Test call after applying unity logging hook", "", LogType.Assert, true);
+                }
+
+                Il2CppInteropManager.PreloadInteropAssemblies();
+                Instance.Execute();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
+                Logger.Log(LogLevel.Error, ex);
+            }
+            finally
+            {
+                mutex?.ReleaseMutex();
+            }
             RuntimeInvokeDetour.Dispose();
             PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
-
-            PreloaderLogger.Log.Log(LogLevel.Debug, "Resetting mono thread");
-            BruthaInterop.thread_suspend_reload();
-            PreloaderLogger.Log.Log(LogLevel.Debug, "Mono thread reset");
-
-            if (ConfigUnityLogging.Value)
-            {
-                Logger.Sources.Add(new IL2CPPUnityLogSource());
-
-                Application.CallLogCallback("Test call after applying unity logging hook", "", LogType.Assert,
-                                            true);
-            }
-
-            mutex = new Mutex(false, "Process_BepInExPreloaderMutex");
-            mutex.WaitOne();
-            Il2CppInteropManager.PreloadInteropAssemblies();
-
-            Instance.Execute();
         }
-        catch (Exception ex)
-        {
-            Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
-            Logger.Log(LogLevel.Error, ex);
-        }
-        finally
-        {
-            mutex?.ReleaseMutex();
-        }
-
-        return result;
+        
+        return originalInvoke(method, obj, parameters, exc);
     }
 
     protected override void InitializeLoggers()
