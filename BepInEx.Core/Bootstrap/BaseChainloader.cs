@@ -250,7 +250,7 @@ public abstract class BaseChainloader<TPlugin>
                                                                          StringComparison
                                                                              .InvariantCultureIgnoreCase));
 
-                if (invalidProcessName)
+                if (Paths.ProcessName != "libil2cpp" && invalidProcessName)
                 {
                     Logger.Log(LogLevel.Warning,
                                $"Skipping [{pluginInfo}] because of process filters ({string.Join(", ", pluginInfo.Processes.Select(p => p.ProcessName).ToArray())})");

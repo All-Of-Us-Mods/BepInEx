@@ -43,6 +43,6 @@ public static class EnvVars
         DOORSTOP_MONO_LIB_PATH = Environment.GetEnvironmentVariable("DOORSTOP_MONO_LIB_PATH");
         DOORSTOP_DLL_SEARCH_DIRS =
             Environment.GetEnvironmentVariable("DOORSTOP_DLL_SEARCH_DIRS")?.Split(Path.PathSeparator) ??
-            new string[0];
+            [];
     }
 }

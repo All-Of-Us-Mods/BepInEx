@@ -4,6 +4,7 @@ using System.Reflection;
 using BepInEx.Configuration;
 using BepInEx.Unity.IL2CPP.Hook.Dobby;
 using BepInEx.Unity.IL2CPP.Hook.Funchook;
+using BepInEx.Unity.IL2CPP.Hook.Starlight;
 using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
@@ -27,6 +28,11 @@ public interface INativeDetour : IDetour
 
     public static INativeDetour Create<T>(nint original, T target) where T : Delegate
     {
+        if (PlatformHelper.Is(Platform.Android))
+        {
+            return new CacheDetourWrapper(new StarlightDetour(original, target), target);
+        }
+        
         var detour = DetourProviderType.Value switch
         {
             DetourProvider.Dobby    => new DobbyDetour(original, target),

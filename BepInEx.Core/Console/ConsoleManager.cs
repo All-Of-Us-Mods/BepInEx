@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Text;
 using BepInEx.Configuration;
+using BepInEx.Core.Console.Android;
 using BepInEx.Unix;
 using MonoMod.Utils;
 
@@ -100,6 +101,8 @@ public static class ConsoleManager
             Driver = new LinuxConsoleDriver();
         else if (PlatformHelper.Is(Platform.Windows))
             Driver = new WindowsConsoleDriver();
+        else if (PlatformHelper.Is(Platform.Android))
+            Driver = new AndroidConsoleDriver();
         else
             throw new PlatformNotSupportedException("Was unable to determine console driver for platform " +
                                                     PlatformHelper.Current);

@@ -61,6 +61,13 @@ public static class UnityInfo
 
     private static void DetermineVersion()
     {
+        // TODO: do not assume among us
+        if (PlatformHelper.Is(Platform.Android))
+        {
+            Version = new UnityVersion(2020, 3, 45, UnityVersionType.Final, 1);
+            return;
+        }
+        
         // Try looking up first since it's more reliable
         foreach (var lookup in ManagerVersionLookup)
             if (lookup.TryLookup(out var version))

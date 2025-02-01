@@ -10,8 +10,7 @@ internal static class UnityPreloaderRunner
 {
     public static void PreloaderMain()
     {
-        var bepinPath =
-            Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(EnvVars.DOORSTOP_INVOKE_DLL_PATH)));
+        var bepinPath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetFullPath(EnvVars.DOORSTOP_INVOKE_DLL_PATH)));
 
         PlatformUtils.SetPlatform();
 

@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -58,7 +59,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         base.Initialize(gameExePath);
         Instance = this;
 
-        if (!NativeLibrary.TryLoad("GameAssembly", typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
+        if (!NativeLibrary.TryLoad("GameAssembly", typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle) &&
+            !NativeLibrary.TryLoad("libil2cpp", typeof(IL2CPPChainloader).Assembly, null, out il2CppHandle))
         {
             Logger.Log(LogLevel.Fatal,
                        "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");
@@ -69,8 +71,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         PreloaderLogger.Log.Log(LogLevel.Debug, $"Runtime invoke pointer: 0x{runtimeInvokePtr.ToInt64():X}");
         RuntimeInvokeDetourDelegate invokeMethodDetour = OnInvokeMethod;
 
-        RuntimeInvokeDetour =
-            INativeDetour.CreateAndApply(runtimeInvokePtr, invokeMethodDetour, out originalInvoke);
+        RuntimeInvokeDetour = INativeDetour.CreateAndApply(runtimeInvokePtr, invokeMethodDetour, out originalInvoke);
         PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke patched");
     }
 
@@ -81,8 +82,17 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         var unhook = false;
 
         if (methodName == "Internal_ActiveSceneChanged")
+        {
+            Mutex mutex = null;
             try
             {
+                mutex = new Mutex(false, "BepInEx_IL2CPPChainloader");
+                mutex.WaitOne();
+
+                PreloaderLogger.Log.LogInfo("Resetting mono thread.");
+                StarlightInterop.thread_suspend_reload();
+                PreloaderLogger.Log.LogInfo("Mono thread reset.");
+        
                 if (ConfigUnityLogging.Value)
                 {
                     Logger.Sources.Add(new IL2CPPUnityLogSource());
@@ -100,6 +110,11 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                 Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
                 Logger.Log(LogLevel.Error, ex);
             }
+            finally
+            {
+                mutex?.ReleaseMutex();
+            }
+        }
 
         var result = originalInvoke(method, obj, parameters, exc);
 
