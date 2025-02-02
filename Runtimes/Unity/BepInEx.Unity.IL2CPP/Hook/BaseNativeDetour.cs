@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using BepInEx.Logging;
 using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP.Hook;
 
@@ -74,8 +75,13 @@ internal abstract class BaseNativeDetour<T> : INativeDetour where T : BaseNative
         if (!typeof(Delegate).IsAssignableFrom(typeof(TDelegate)))
             throw new InvalidOperationException($"Type {typeof(TDelegate)} not a delegate type.");
 
-        _ = GenerateTrampoline(typeof(TDelegate).GetMethod("Invoke"));
+        if (PlatformHelper.Is(Platform.Android))
+        {
+            Prepare();
+            return Marshal.GetDelegateForFunctionPointer<TDelegate>(TrampolinePtr);
+        }
 
+        _ = GenerateTrampoline(typeof(TDelegate).GetMethod("Invoke"));
         return Marshal.GetDelegateForFunctionPointer<TDelegate>(TrampolinePtr);
     }
 

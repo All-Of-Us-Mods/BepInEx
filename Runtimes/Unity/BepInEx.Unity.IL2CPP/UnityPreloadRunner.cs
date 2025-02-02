@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Preloader.Core;
+using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 

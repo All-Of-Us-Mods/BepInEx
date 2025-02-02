@@ -19,6 +19,9 @@ internal static class StarlightEntrypoint
 
     public static int Start(IntPtr arg, int argLength)
     {
+        Console.SetOut(new StarlightInterop.InteropWriter());
+        Console.SetError(new StarlightInterop.InteropWriter());
+
         var data = Marshal.PtrToStructure<StarlightData>(arg);
         var dotnet = Path.Join(data.DataPath, "dotnet");
         var bepinPath = Path.Join(data.DataPath, "BepInEx", "Core");
@@ -63,7 +66,7 @@ internal static class StarlightEntrypoint
                 else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BEPINEX_FAIL_FAST")))
                 {
                     // Don't exit the game if we have no way of signaling to the user that a crash happened
-                    return 1;
+                    return 0;
                 }
             }
             catch (Exception)

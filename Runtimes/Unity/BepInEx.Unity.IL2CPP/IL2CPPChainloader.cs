@@ -11,6 +11,7 @@ using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
 using BepInEx.Unity.IL2CPP.Utils;
 using Il2CppInterop.Runtime.InteropTypes;
+using MonoMod.Utils;
 using UnityEngine;
 using Logger = BepInEx.Logging.Logger;
 
@@ -58,9 +59,10 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         base.Initialize(gameExePath);
         Instance = this;
+        
+        var libraryName = PlatformHelper.Is(Platform.Windows) ? "GameAssembly" : "libil2cpp";
 
-        if (!NativeLibrary.TryLoad("GameAssembly", typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle) &&
-            !NativeLibrary.TryLoad("libil2cpp", typeof(IL2CPPChainloader).Assembly, null, out il2CppHandle))
+        if (!NativeLibrary.TryLoad(libraryName, typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
         {
             Logger.Log(LogLevel.Fatal,
                        "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");

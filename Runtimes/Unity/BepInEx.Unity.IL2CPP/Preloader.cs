@@ -26,19 +26,22 @@ public static class Preloader
         try
         {
             HarmonyBackendFix.Initialize();
-            ConsoleSetOutFix.Apply();
+            // ConsoleSetOutFix.Apply();
             UnityInfo.Initialize(Paths.ExecutablePath, Paths.GameDataPath);
 
             ConsoleManager.Initialize(false, true);
+            Logger.Listeners.Add(new ConsoleLogListener());
 
             PreloaderLog = new PreloaderConsoleListener();
             Logger.Listeners.Add(PreloaderLog);
 
+            /*
             if (ConsoleManager.ConsoleEnabled)
             {
                 ConsoleManager.CreateConsole();
                 Logger.Listeners.Add(new ConsoleLogListener());
             }
+            */
 
             RedirectStdErrFix.Apply();
 
@@ -89,6 +92,7 @@ public static class Preloader
         catch (Exception ex)
         {
             Log.Log(LogLevel.Fatal, ex);
+            Console.WriteLine(ex);
 
             throw;
         }
