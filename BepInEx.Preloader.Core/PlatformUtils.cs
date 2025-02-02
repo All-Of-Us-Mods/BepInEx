@@ -123,8 +123,18 @@ internal static class PlatformUtils
         {
             // Detect ARM based on PE info or uname.
             typeof(object).Module.GetPEKind(out var peKind, out var machine);
-            if (machine == (ImageFileMachine) 0x01C4 /* ARM, .NET Framework 4.5 */)
+            if (machine == (ImageFileMachine)0x01C4 /* ARM */ ||
+                machine == (ImageFileMachine)0xAA64 /* ARM64, newer .NET versions */)
+            {
                 current |= Platform.ARM;
+            }
+        }
+
+        // x86 is rare on android so we can assume it's ARM.
+        // TODO: maybe dont do this forever
+        if (current.Is(Platform.Android))
+        {
+            current |= Platform.ARM;
         }
 
         PlatformHelper.Current = current;
