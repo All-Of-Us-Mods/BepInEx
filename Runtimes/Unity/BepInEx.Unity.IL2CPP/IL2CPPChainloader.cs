@@ -32,7 +32,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
      "Include unity log messages in log file output.");
 
 
-    private static INativeDetour RuntimeInvokeDetour { get; set; }
+    private static NativeDetour RuntimeInvokeDetour { get; set; }
 
     public static IL2CPPChainloader Instance { get; set; }
 
@@ -73,7 +73,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         PreloaderLogger.Log.Log(LogLevel.Debug, $"Runtime invoke pointer: 0x{runtimeInvokePtr.ToInt64():X}");
         RuntimeInvokeDetourDelegate invokeMethodDetour = OnInvokeMethod;
 
-        RuntimeInvokeDetour = INativeDetour.CreateAndApply(runtimeInvokePtr, invokeMethodDetour, out originalInvoke);
+        RuntimeInvokeDetour = new NativeDetour(runtimeInvokePtr, invokeMethodDetour);
+        originalInvoke = RuntimeInvokeDetour.GenerateTrampoline<RuntimeInvokeDetourDelegate>();
         PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke patched");
     }
 

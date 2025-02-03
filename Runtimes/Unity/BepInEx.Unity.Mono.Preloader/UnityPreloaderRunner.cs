@@ -60,7 +60,6 @@ internal static class UnityPreloaderRunner
     {
         if (UnityPreloader.ConfigApplyRuntimePatches.Value)
         {
-            XTermFix.Apply();
             ConsoleSetOutFix.Apply();
         }
 

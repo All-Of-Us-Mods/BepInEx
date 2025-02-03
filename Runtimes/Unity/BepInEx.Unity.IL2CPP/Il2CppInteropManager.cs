@@ -237,7 +237,7 @@ internal static partial class Il2CppInteropManager
         Il2CppInteropRuntime.Create(new RuntimeConfiguration
                             {
                                 UnityVersion = new Version(unityVersion.Major, unityVersion.Minor, unityVersion.Build),
-                                DetourProvider = new Il2CppInteropDetourProvider()
+                                DetourProvider = new NativeDetourProvider()
                             })
                             .AddLogger(interopLogger)
                             .AddHarmonySupport()
