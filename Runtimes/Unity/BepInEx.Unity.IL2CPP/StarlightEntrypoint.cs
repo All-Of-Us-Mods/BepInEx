@@ -55,7 +55,7 @@ internal static class StarlightEntrypoint
 
             try
             {
-                if (PlatformHelper.Is(Platform.Windows))
+                if (PlatformDetection.OS is OSKind.Windows)
                 {
                     MessageBox.Show("Failed to start BepInEx", "BepInEx");
                 }

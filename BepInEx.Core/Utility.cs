@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using Mono.Cecil;
@@ -17,6 +18,9 @@ public static class Utility
 {
     private const string TRUSTED_PLATFORM_ASSEMBLIES = "TRUSTED_PLATFORM_ASSEMBLIES";
     private static bool? sreEnabled;
+
+    public static readonly bool IsCore =
+        typeof(object).Assembly.GetName().Name == "System.Private.CoreLib";
 
     /// <summary>
     ///     Whether current Common Language Runtime supports dynamic method generation using

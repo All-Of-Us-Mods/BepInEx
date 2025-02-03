@@ -120,7 +120,7 @@ internal static partial class Il2CppInteropManager
 
     public static string GameAssemblyPath => Environment.GetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH") ??
                                              Path.Combine(Paths.GameRootPath,
-                                                          "GameAssembly." + PlatformHelper.LibrarySuffix);
+                                                          "GameAssembly." + (PlatformDetection.OS is OSKind.Windows ? "dll" : "so"));
 
     private static string HashPath => Path.Combine(IL2CPPInteropAssemblyPath, "assembly-hash.txt");
 

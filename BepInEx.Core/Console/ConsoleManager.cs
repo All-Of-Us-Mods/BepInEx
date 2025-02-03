@@ -97,15 +97,14 @@ public static class ConsoleManager
 
     public static void Initialize(bool alreadyActive, bool useManagedEncoder)
     {
-        if (PlatformHelper.Is(Platform.Android))
+        if (PlatformDetection.OS is OSKind.Android)
             Driver = new AndroidConsoleDriver();
-        else if (PlatformHelper.Is(Platform.Unix))
+        else if (PlatformDetection.OS is OSKind.Linux or OSKind.OSX)
             Driver = new LinuxConsoleDriver();
-        else if (PlatformHelper.Is(Platform.Windows))
+        else if (PlatformDetection.OS is OSKind.Windows)
             Driver = new WindowsConsoleDriver();
         else
-            throw new PlatformNotSupportedException("Was unable to determine console driver for platform " +
-                                                    PlatformHelper.Current);
+            throw new PlatformNotSupportedException("Was unable to determine console driver for platform " + PlatformDetection.OS);
 
         Driver.Initialize(alreadyActive, useManagedEncoder);
     }

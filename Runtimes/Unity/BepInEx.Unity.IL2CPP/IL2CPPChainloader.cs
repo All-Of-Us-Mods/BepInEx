@@ -60,7 +60,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         base.Initialize(gameExePath);
         Instance = this;
         
-        var libraryName = PlatformHelper.Is(Platform.Windows) ? "GameAssembly" : "libil2cpp";
+        var libraryName = PlatformDetection.OS is OSKind.Windows ? "GameAssembly" : "libil2cpp";
 
         if (!NativeLibrary.TryLoad(libraryName, typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
         {
@@ -124,7 +124,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
         if (unhook)
         {
-            RuntimeInvokeDetour.Dispose();
+            //TODO: RuntimeInvokeDetour();
 
             PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
         }

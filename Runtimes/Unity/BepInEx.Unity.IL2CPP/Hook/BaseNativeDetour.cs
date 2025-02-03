@@ -75,12 +75,6 @@ internal abstract class BaseNativeDetour<T> : INativeDetour where T : BaseNative
         if (!typeof(Delegate).IsAssignableFrom(typeof(TDelegate)))
             throw new InvalidOperationException($"Type {typeof(TDelegate)} not a delegate type.");
 
-        if (PlatformHelper.Is(Platform.Android))
-        {
-            Prepare();
-            return Marshal.GetDelegateForFunctionPointer<TDelegate>(TrampolinePtr);
-        }
-
         _ = GenerateTrampoline(typeof(TDelegate).GetMethod("Invoke"));
         return Marshal.GetDelegateForFunctionPointer<TDelegate>(TrampolinePtr);
     }

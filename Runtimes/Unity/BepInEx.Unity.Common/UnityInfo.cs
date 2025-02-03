@@ -62,7 +62,7 @@ public static class UnityInfo
     private static void DetermineVersion()
     {
         // TODO: do not assume among us
-        if (PlatformHelper.Is(Platform.Android))
+        if (PlatformDetection.OS is OSKind.Android)
         {
             Version = new UnityVersion(2020, 3, 45, UnityVersionType.Final, 1);
             return;
@@ -77,7 +77,7 @@ public static class UnityInfo
             }
 
         // On Windows, we can try to parse executable name, but some games can mess up the file version as well 
-        if (PlatformHelper.Is(Platform.Windows))
+        if (PlatformDetection.OS is OSKind.Windows)
             try
             {
                 var version = FileVersionInfo.GetVersionInfo(PlayerPath);
