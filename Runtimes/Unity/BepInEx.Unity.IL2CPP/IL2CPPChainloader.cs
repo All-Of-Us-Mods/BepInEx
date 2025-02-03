@@ -125,7 +125,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
         if (unhook)
         {
-            //TODO: RuntimeInvokeDetour();
+            RuntimeInvokeDetour.Dispose();
 
             PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
         }

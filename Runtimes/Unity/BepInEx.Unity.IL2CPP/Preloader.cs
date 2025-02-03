@@ -18,9 +18,6 @@ public static class Preloader
 
     internal static ManualLogSource Log => PreloaderLogger.Log;
 
-    // TODO: This is not needed, maybe remove? (Instance is saved in IL2CPPChainloader itself)
-    private static IL2CPPChainloader Chainloader { get; set; }
-
     public static void Run()
     {
         try
@@ -85,9 +82,7 @@ public static class Preloader
             Logger.Listeners.Remove(PreloaderLog);
 
 
-            Chainloader = new IL2CPPChainloader();
-
-            Chainloader.Initialize();
+            new IL2CPPChainloader().Initialize();
         }
         catch (Exception ex)
         {
