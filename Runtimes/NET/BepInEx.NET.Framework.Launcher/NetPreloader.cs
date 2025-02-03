@@ -67,7 +67,7 @@ public static class NetPreloader
         foreach (var searchDir in Program.ResolveDirectories)
             TypeLoader.SearchDirectories.Add(searchDir);
 
-        if (PlatformHelper.Is(Platform.Windows))
+        if (PlatformDetection.OS is OSKind.Windows)
         {
             AddDllDirectory(Paths.GameRootPath);
             SetDllDirectory(Paths.GameRootPath);
