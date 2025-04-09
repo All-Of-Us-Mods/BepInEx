@@ -86,12 +86,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
         if (methodName == "Internal_ActiveSceneChanged")
         {
-            Mutex mutex = null;
             try
             {
-                mutex = new Mutex(false, "BepInEx_IL2CPPChainloader");
-                mutex.WaitOne();
-
                 PreloaderLogger.Log.LogInfo("Resetting mono thread.");
                 StarlightInterop.thread_suspend_reload();
                 PreloaderLogger.Log.LogInfo("Mono thread reset.");
@@ -114,10 +110,6 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             {
                 Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
                 Logger.Log(LogLevel.Error, ex);
-            }
-            finally
-            {
-                mutex?.ReleaseMutex();
             }
         }
 
