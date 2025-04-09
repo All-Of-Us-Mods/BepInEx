@@ -303,10 +303,9 @@ internal static partial class Il2CppInteropManager
         }
     }
 
-    private static List<AsmResolver.DotNet.AssemblyDefinition> RunCpp2Il()
+    private static List<AssemblyDefinition> RunCpp2Il()
     {
-        var metadataPath = Path.Combine(Paths.GameRootPath,
-                                        GlobalMetadataPath.Value
+        var metadataPath = Path.Combine(GlobalMetadataPath.Value
                                                           .Replace("{BepInEx}", Paths.BepInExRootPath)
                                                           .Replace("{ProcessName}", Paths.ProcessName)
                                                           .Replace("{GameDataPath}", Paths.GameDataPath));
@@ -330,7 +329,7 @@ internal static partial class Il2CppInteropManager
         var unityVersion = UnityInfo.Version;
         Cpp2IlApi.InitializeLibCpp2Il(GameAssemblyPath, metadataPath, unityVersion, false);
 
-        List<Cpp2IlProcessingLayer> processingLayers = new() { new AttributeInjectorProcessingLayer(), };
+        List<Cpp2IlProcessingLayer> processingLayers = [new AttributeInjectorProcessingLayer()];
 
         foreach (var cpp2IlProcessingLayer in processingLayers)
         {
