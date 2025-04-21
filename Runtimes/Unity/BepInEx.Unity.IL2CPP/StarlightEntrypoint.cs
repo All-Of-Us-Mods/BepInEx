@@ -17,7 +17,15 @@ internal static class StarlightEntrypoint
         public string RedirectLibsPath;
     }
 
-    public static int Start(IntPtr arg, int argLength)
+    private static void ChainloaderFunction()
+    {
+        Il2CppInteropManager.PreloadInteropAssemblies();
+        IL2CPPChainloader.Instance.Execute();
+    }
+
+    public delegate nint StarlightDelegate(IntPtr arg, int argLength);
+
+    public static nint Start(IntPtr arg, int argLength)
     {
         Console.SetOut(new StarlightInterop.InteropWriter());
         Console.SetError(new StarlightInterop.InteropWriter());
@@ -37,10 +45,8 @@ internal static class StarlightEntrypoint
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ?? $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
-
         
         // entrypoint mutex handling is done in native.
-        
         try
         {
             EnvVars.LoadVars();
@@ -76,6 +82,6 @@ internal static class StarlightEntrypoint
 
             Environment.Exit(1);
         }
-        return 0;
+        return Marshal.GetFunctionPointerForDelegate(ChainloaderFunction);
     }
 }

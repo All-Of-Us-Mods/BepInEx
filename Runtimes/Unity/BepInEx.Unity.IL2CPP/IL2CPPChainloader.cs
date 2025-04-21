@@ -59,7 +59,9 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         base.Initialize(gameExePath);
         Instance = this;
-        
+
+        return;
+
         var libraryName = PlatformDetection.OS is OSKind.Windows ? "GameAssembly" : "libil2cpp";
 
         if (!NativeLibrary.TryLoad(libraryName, typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
