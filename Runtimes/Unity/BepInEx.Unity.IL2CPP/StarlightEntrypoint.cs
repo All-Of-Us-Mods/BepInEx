@@ -32,6 +32,8 @@ internal static unsafe class StarlightEntrypoint
     private static void GarbageCollection()
     {
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 
     public delegate int StartDelegate(StarlightData* data);
