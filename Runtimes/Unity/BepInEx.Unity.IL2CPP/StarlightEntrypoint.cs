@@ -2,38 +2,58 @@
 using System.Runtime.InteropServices;
 using System;
 using System.Reflection;
+using System.Runtime;
+using System.Runtime.CompilerServices;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 
-internal static class StarlightEntrypoint
+internal static unsafe class StarlightEntrypoint
 {
+    [StructLayout(LayoutKind.Sequential)]
     public struct StarlightData
     {
-        public string DataPath;
-        public string AuLibsPath;
-        public string RedirectLibsPath;
+        public IntPtr DataPath;
+        public IntPtr AuLibsPath;
+        public IntPtr ChainloaderFunc;
+        public IntPtr GarbageCollectionFunc;
     }
 
-    private static void ChainloaderFunction()
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void StartChainloader()
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
         IL2CPPChainloader.Instance.Execute();
     }
 
-    public delegate nint StarlightDelegate(IntPtr arg, int argLength);
-
-    public static nint Start(IntPtr arg, int argLength)
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void GarbageCollection()
     {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+    }
+
+    public delegate int StartDelegate(StarlightData* data);
+
+    [UnmanagedCallersOnly(EntryPoint = "Start", CallConvs = [typeof(CallConvCdecl)])]
+    public static int Start(StarlightData* data)
+    {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+
         Console.SetOut(new StarlightInterop.InteropWriter());
         Console.SetError(new StarlightInterop.InteropWriter());
 
-        var data = Marshal.PtrToStructure<StarlightData>(arg);
-        var dotnet = Path.Join(data.DataPath, "dotnet");
-        var bepinPath = Path.Join(data.DataPath, "BepInEx", "Core");
-        var auIl2Cpp = Path.Join(data.AuLibsPath, "libil2cpp.so");
+        var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
+        var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
+
+        var dotnet = Path.Join(dataPath, "dotnet");
+        var bepinPath = Path.Join(dataPath, "BepInEx", "Core");
+        var auIl2Cpp = Path.Join(auLibsPath, "libil2cpp.so");
+
+        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&GarbageCollection;
+        data->ChainloaderFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&StartChainloader;
 
         // override doorstop env vars cuz we arent using them.
         Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);
@@ -41,17 +61,16 @@ internal static class StarlightEntrypoint
         Environment.SetEnvironmentVariable("DOORSTOP_PROCESS_PATH", auIl2Cpp);
         Environment.SetEnvironmentVariable("DOORSTOP_DLL_SEARCH_DIRS", dotnet+Path.PathSeparator+bepinPath);
         Environment.SetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH", auIl2Cpp);
-        Environment.SetEnvironmentVariable("METADATA_PATH", Path.Join(data.DataPath, "global-metadata.dat"));
+        Environment.SetEnvironmentVariable("METADATA_PATH", Path.Join(dataPath, "global-metadata.dat"));
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ?? $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
         
-        // entrypoint mutex handling is done in native.
         try
         {
             EnvVars.LoadVars();
 
-            silentExceptionLog = Path.Combine(data.DataPath, silentExceptionLog);
+            silentExceptionLog = Path.Combine(dataPath, silentExceptionLog);
 
             UnityPreloaderRunner.PreloaderMain();
         }
@@ -72,7 +91,7 @@ internal static class StarlightEntrypoint
                 else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("BEPINEX_FAIL_FAST")))
                 {
                     // Don't exit the game if we have no way of signaling to the user that a crash happened
-                    return 0;
+                    return 1;
                 }
             }
             catch (Exception)
@@ -82,6 +101,7 @@ internal static class StarlightEntrypoint
 
             Environment.Exit(1);
         }
-        return Marshal.GetFunctionPointerForDelegate(ChainloaderFunction);
+
+        return 0;
     }
 }
