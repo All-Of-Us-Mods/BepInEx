@@ -31,7 +31,6 @@ internal static unsafe class StarlightEntrypoint
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void GarbageCollection()
     {
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
     }
 
@@ -40,8 +39,6 @@ internal static unsafe class StarlightEntrypoint
     [UnmanagedCallersOnly(EntryPoint = "Start", CallConvs = [typeof(CallConvCdecl)])]
     public static int Start(StarlightData* data)
     {
-        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
-
         Console.SetOut(new StarlightInterop.InteropWriter());
         Console.SetError(new StarlightInterop.InteropWriter());
 
