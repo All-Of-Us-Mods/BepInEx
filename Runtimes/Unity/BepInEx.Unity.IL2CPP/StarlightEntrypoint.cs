@@ -4,6 +4,8 @@ using System;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
@@ -31,9 +33,12 @@ internal static unsafe class StarlightEntrypoint
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void GarbageCollection()
     {
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        Task.Run(() =>
+        {
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        });
     }
 
     public delegate int StartDelegate(StarlightData* data);
