@@ -35,8 +35,7 @@ internal static unsafe class StarlightEntrypoint
     {
         Task.Run(() =>
         {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true);
-            GC.WaitForPendingFinalizers();
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Optimized);
             GC.Collect();
         });
     }
