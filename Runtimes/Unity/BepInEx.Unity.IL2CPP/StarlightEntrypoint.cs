@@ -23,14 +23,14 @@ internal static unsafe class StarlightEntrypoint
         public IntPtr GarbageCollectionFunc;
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly]
     private static void StartChainloader()
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
         IL2CPPChainloader.Instance.Execute();
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly]
     private static void GarbageCollection()
     {
         Task.Run(() =>
@@ -42,7 +42,7 @@ internal static unsafe class StarlightEntrypoint
 
     public delegate int StartDelegate(StarlightData* data);
 
-    [UnmanagedCallersOnly(EntryPoint = "Start", CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly(EntryPoint = "Start")]
     public static int Start(StarlightData* data)
     {
         Console.SetOut(new StarlightInterop.InteropWriter());
@@ -55,8 +55,8 @@ internal static unsafe class StarlightEntrypoint
         var bepinPath = Path.Join(dataPath, "BepInEx", "Core");
         var auIl2Cpp = Path.Join(auLibsPath, "libil2cpp.so");
 
-        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&GarbageCollection;
-        data->ChainloaderFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&StartChainloader;
+        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged<void>)&GarbageCollection;
+        data->ChainloaderFunc = (IntPtr)(delegate* unmanaged<void>)&StartChainloader;
 
         // override doorstop env vars cuz we arent using them.
         Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);
