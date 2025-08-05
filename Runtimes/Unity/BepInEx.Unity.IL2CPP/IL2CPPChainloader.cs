@@ -59,72 +59,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         base.Initialize(gameExePath);
         Instance = this;
-
-        return;
-
-        var libraryName = PlatformDetection.OS is OSKind.Windows ? "GameAssembly" : "libil2cpp";
-
-        if (!NativeLibrary.TryLoad(libraryName, typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
-        {
-            Logger.Log(LogLevel.Fatal,
-                       "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");
-            return;
-        }
-
-        var runtimeInvokePtr = NativeLibrary.GetExport(il2CppHandle, "il2cpp_runtime_invoke");
-        PreloaderLogger.Log.Log(LogLevel.Debug, $"Runtime invoke pointer: 0x{runtimeInvokePtr.ToInt64():X}");
-        RuntimeInvokeDetourDelegate invokeMethodDetour = OnInvokeMethod;
-
-        RuntimeInvokeDetour = new NativeDetour(runtimeInvokePtr, invokeMethodDetour);
-        originalInvoke = RuntimeInvokeDetour.GenerateTrampoline<RuntimeInvokeDetourDelegate>();
-        PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke patched");
-    }
-
-    private static IntPtr OnInvokeMethod(IntPtr method, IntPtr obj, IntPtr parameters, IntPtr exc)
-    {
-        var methodName = Marshal.PtrToStringAnsi(Il2CppInterop.Runtime.IL2CPP.il2cpp_method_get_name(method));
-
-        var unhook = false;
-
-        if (methodName == "Internal_ActiveSceneChanged")
-        {
-            try
-            {
-                PreloaderLogger.Log.LogInfo("Resetting mono thread.");
-                StarlightInterop.thread_suspend_reload();
-                PreloaderLogger.Log.LogInfo("Mono thread reset.");
-        
-                if (ConfigUnityLogging.Value)
-                {
-                    Logger.Sources.Add(new IL2CPPUnityLogSource());
-
-                    Application.CallLogCallback("Test call after applying unity logging hook", "", LogType.Assert,
-                                                true);
-                }
-
-                unhook = true;
-
-                Il2CppInteropManager.PreloadInteropAssemblies();
-
-                Instance.Execute();
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
-                Logger.Log(LogLevel.Error, ex);
-            }
-        }
-
-        var result = originalInvoke(method, obj, parameters, exc);
-
-        if (unhook)
-        {
-            RuntimeInvokeDetour.Dispose();
-
-            PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
-        }
-
-        return result;
+        // OnInvokeHook is handled by Starlight native patches.
     }
 
     protected override void InitializeLoggers()
