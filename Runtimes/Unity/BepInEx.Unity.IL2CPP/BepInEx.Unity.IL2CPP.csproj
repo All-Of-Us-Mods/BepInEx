@@ -7,6 +7,7 @@
         <OutputPath>$(BuildDir)/Unity.IL2CPP</OutputPath>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <EnableDynamicLoading>true</EnableDynamicLoading>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
         <ProjectReference Include="..\..\..\BepInEx.Core\BepInEx.Core.csproj"/>

@@ -73,6 +73,28 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         Logger.Sources.Add(new IL2CPPLogSource());
     }
 
+    public override void Execute()
+    {
+        try
+        {
+            // TODO: implement repo mods
+            LoadPlugins(Paths.PluginPath, StarlightEntrypoint.ModProfileDirectory);
+            Finish();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                ConsoleManager.CreateConsole();
+            }
+            catch { }
+
+            Logger.Log(LogLevel.Error, $"Error occurred loading plugins: {ex}");
+        }
+
+        Logger.Log(LogLevel.Message, "Chainloader startup complete");
+    }
+
     public override BasePlugin LoadPlugin(PluginInfo pluginInfo, Assembly pluginAssembly)
     {
         var type = pluginAssembly.GetType(pluginInfo.TypeName);

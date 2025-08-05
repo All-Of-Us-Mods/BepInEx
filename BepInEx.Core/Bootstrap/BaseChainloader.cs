@@ -315,7 +315,7 @@ public abstract class BaseChainloader<TPlugin>
             var plugins = DiscoverPlugins();
             Logger.Log(LogLevel.Info, $"{plugins.Count} plugin{(plugins.Count == 1 ? "" : "s")} to load");
             LoadPlugins(plugins);
-            Finished?.Invoke();
+            Finish();
         }
         catch (Exception ex)
         {
@@ -329,6 +329,11 @@ public abstract class BaseChainloader<TPlugin>
         }
 
         Logger.Log(LogLevel.Message, "Chainloader startup complete");
+    }
+
+    protected void Finish()
+    {
+        Finished?.Invoke();
     }
 
     private IList<PluginInfo> LoadPlugins(IList<PluginInfo> plugins)

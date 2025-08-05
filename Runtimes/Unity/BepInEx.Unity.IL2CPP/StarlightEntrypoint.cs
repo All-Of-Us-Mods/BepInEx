@@ -4,6 +4,8 @@ using System;
 using System.Reflection;
 using System.Runtime;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
@@ -14,6 +16,9 @@ namespace BepInEx.Unity.IL2CPP;
 
 internal static unsafe class StarlightEntrypoint
 {
+    public static string? ModProfileDirectory { get; private set; }
+    public static ModProfileJson? ProfileData { get; private set; }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct StarlightData
     {
@@ -21,6 +26,7 @@ internal static unsafe class StarlightEntrypoint
         public IntPtr AuLibsPath;
         public IntPtr ChainloaderFunc;
         public IntPtr GarbageCollectionFunc;
+        public IntPtr ProfilePath;
     }
 
     [UnmanagedCallersOnly]
@@ -50,6 +56,14 @@ internal static unsafe class StarlightEntrypoint
 
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
+        var profilePath = Marshal.PtrToStringAnsi(data->ProfilePath);
+
+        if (File.Exists(profilePath))
+        {
+            using var profileFile = File.OpenRead(profilePath);
+            ModProfileDirectory = Path.GetDirectoryName(profilePath);
+            ProfileData = JsonSerializer.Deserialize<ModProfileJson>(profileFile);
+        }
 
         var dotnet = Path.Join(dataPath, "dotnet");
         var bepinPath = Path.Join(dataPath, "BepInEx", "Core");
