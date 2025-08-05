@@ -331,6 +331,9 @@ internal static partial class Il2CppInteropManager
         var unityVersion = UnityInfo.Version;
         Cpp2IlApi.InitializeLibCpp2Il(GameAssemblyPath, metadataPath, unityVersion, false);
 
+        Cpp2IlApi.RuntimeOptions ??= new Cpp2IlRuntimeArgs();
+        Cpp2IlApi.RuntimeOptions.LowMemoryMode = true;
+
         List<Cpp2IlProcessingLayer> processingLayers = [new AttributeInjectorProcessingLayer()];
 
         foreach (var cpp2IlProcessingLayer in processingLayers)
