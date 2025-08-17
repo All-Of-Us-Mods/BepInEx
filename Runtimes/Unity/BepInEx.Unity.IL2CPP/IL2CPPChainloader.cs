@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -78,7 +79,11 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         try
         {
             // TODO: implement repo mods
-            LoadPlugins(Paths.PluginPath, StarlightEntrypoint.ModProfileDirectory);
+            LoadPlugins(Paths.PluginPath);
+            if (Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
+            {
+                LoadPlugins(StarlightEntrypoint.ModProfileDirectory);
+            }
             Finish();
         }
         catch (Exception ex)
