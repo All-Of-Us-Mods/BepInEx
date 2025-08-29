@@ -84,6 +84,29 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             {
                 LoadPlugins(StarlightEntrypoint.ModProfileDirectory);
             }
+
+            if (StarlightEntrypoint.ProfileData != null)
+            {
+                Logger.Log(LogLevel.Info, "Loading Profile plugins...");
+                var modsPath = Path.Combine(Utility.ParentDirectory(Paths.BepInExRootPath), "starlight_mods");
+                foreach (var (mod, version) in StarlightEntrypoint.ProfileData.Value.mods)
+                {
+                    var versionPath = Path.Combine(modsPath, mod, version);
+                    if (Directory.Exists(versionPath))
+                    {
+                        LoadPlugins(versionPath);
+                    }
+                    else
+                    {
+                        Logger.Log(LogLevel.Error, "Directory does not exist: " + versionPath);
+                    }
+                }
+            }
+            else
+            {
+                Logger.Log(LogLevel.Warning, "No profile data found, skipping profile plugins.");
+            }
+
             Finish();
         }
         catch (Exception ex)
