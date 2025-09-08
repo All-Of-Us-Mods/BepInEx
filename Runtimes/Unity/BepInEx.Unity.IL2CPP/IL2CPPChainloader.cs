@@ -1,19 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using BepInEx.Preloader.Core;
 using BepInEx.Preloader.Core.Logging;
 using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
 using BepInEx.Unity.IL2CPP.Utils;
 using Il2CppInterop.Runtime.InteropTypes;
-using MonoMod.Utils;
-using UnityEngine;
 using Logger = BepInEx.Logging.Logger;
 
 namespace BepInEx.Unity.IL2CPP;
@@ -78,11 +75,11 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         try
         {
-            // TODO: implement repo mods
-            LoadPlugins(Paths.PluginPath);
+            var paths = new List<string> { Paths.PluginPath };
+
             if (Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
             {
-                LoadPlugins(StarlightEntrypoint.ModProfileDirectory);
+                paths.Add(StarlightEntrypoint.ModProfileDirectory);
             }
 
             if (StarlightEntrypoint.ProfileData != null)
@@ -94,7 +91,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                     var versionPath = Path.Combine(modsPath, mod, version);
                     if (Directory.Exists(versionPath))
                     {
-                        LoadPlugins(versionPath);
+                        paths.Add(versionPath);
                     }
                     else
                     {
@@ -106,6 +103,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             {
                 Logger.Log(LogLevel.Warning, "No profile data found, skipping profile plugins.");
             }
+
+            LoadPlugins(paths.ToArray());
 
             Finish();
         }
