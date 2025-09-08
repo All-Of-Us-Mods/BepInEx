@@ -29,7 +29,6 @@ using Il2CppInterop.HarmonySupport;
 using Il2CppInterop.Runtime.Startup;
 using LibCpp2IL;
 using Microsoft.Extensions.Logging;
-using Mono.Cecil;
 using MonoMod.Utils;
 using AssemblyDefinition = AsmResolver.DotNet.AssemblyDefinition;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
