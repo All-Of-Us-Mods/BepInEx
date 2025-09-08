@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Preloader.Core;
-using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
 
@@ -17,6 +16,13 @@ internal static class UnityPreloaderRunner
 
         Paths.SetExecutablePath(EnvVars.DOORSTOP_PROCESS_PATH, bepinPath, EnvVars.DOORSTOP_MANAGED_FOLDER_DIR, false,
                                 EnvVars.DOORSTOP_DLL_SEARCH_DIRS);
+
+        if (StarlightEntrypoint.ModProfileDirectory != null) 
+        {
+            var patcherDir = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "patchers");
+            Directory.CreateDirectory(patcherDir);
+            Paths.OverridePatcherPluginPath(patcherDir);
+        }
 
         // Cecil 0.11 requires one to manually set up list of trusted assemblies for assembly resolving
         // The main BCL path
