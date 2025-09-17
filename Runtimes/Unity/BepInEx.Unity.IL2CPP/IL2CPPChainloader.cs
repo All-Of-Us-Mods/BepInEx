@@ -75,9 +75,12 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         try
         {
+            StarlightInterop.set_loading(true);
+
             var paths = new List<string> { Paths.PluginPath };
 
-            if (StarlightEntrypoint.ModProfileDirectory != null && Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
+            if (StarlightEntrypoint.ModProfileDirectory != null &&
+                Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
             {
                 paths.Add(StarlightEntrypoint.ModProfileDirectory);
             }
@@ -104,7 +107,13 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                 Logger.Log(LogLevel.Warning, "No profile data found, skipping profile plugins.");
             }
 
-            LoadPlugins(paths.ToArray());
+            var plugins = new List<PluginInfo>();
+            foreach (var pluginsPath in paths)
+            {
+                plugins.AddRange(DiscoverPluginsFrom(pluginsPath));
+            }
+            StarlightInterop.set_loading_count(plugins.Count);
+            LoadPlugins(plugins);
 
             Finish();
         }
@@ -118,18 +127,26 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
             Logger.Log(LogLevel.Error, $"Error occurred loading plugins: {ex}");
         }
+        finally
+        {
+            StarlightInterop.set_loading(false);
+        }
 
         Logger.Log(LogLevel.Message, "Chainloader startup complete");
     }
 
     public override BasePlugin LoadPlugin(PluginInfo pluginInfo, Assembly pluginAssembly)
     {
+        StarlightInterop.set_loading_text(pluginInfo.Metadata.Name);
+
         var type = pluginAssembly.GetType(pluginInfo.TypeName);
 
         var pluginInstance = (BasePlugin) Activator.CreateInstance(type);
 
         PluginLoad?.Invoke(pluginInfo, pluginAssembly, pluginInstance);
         pluginInstance.Load();
+
+        StarlightInterop.increment_loading();
 
         return pluginInstance;
     }

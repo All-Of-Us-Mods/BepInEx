@@ -336,7 +336,7 @@ public abstract class BaseChainloader<TPlugin>
         Finished?.Invoke();
     }
 
-    private IList<PluginInfo> LoadPlugins(IList<PluginInfo> plugins)
+    protected IList<PluginInfo> LoadPlugins(IList<PluginInfo> plugins)
     {
         var sortedPlugins = ModifyLoadOrder(plugins);
 
