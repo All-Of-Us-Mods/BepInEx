@@ -19,7 +19,16 @@ internal static partial class StarlightInterop
     public static unsafe partial void unhook(IntPtr target);
 
     [LibraryImport(LIBRARY_NAME)]
-    public static unsafe partial void thread_suspend_reload();
+    public static unsafe partial void set_loading([MarshalAs(UnmanagedType.I1)] bool loading);
+
+    [LibraryImport(LIBRARY_NAME)]
+    public static unsafe partial void set_loading_text([MarshalAs(UnmanagedType.LPStr)] string text);
+
+    [LibraryImport(LIBRARY_NAME)]
+    public static unsafe partial void set_loading_count(int count);
+
+    [LibraryImport(LIBRARY_NAME)]
+    public static unsafe partial void increment_loading();
     
     public class InteropWriter : TextWriter
     {

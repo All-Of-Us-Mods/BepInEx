@@ -2,20 +2,20 @@
 using System.Runtime.InteropServices;
 using System;
 using System.Reflection;
-using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Threading;
+using System.Text.Json;
 using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace BepInEx.Unity.IL2CPP;
 
 internal static unsafe class StarlightEntrypoint
 {
+    public static string? ModProfileDirectory { get; private set; }
+    public static ModProfileJson? ProfileData { get; private set; }
+
     private static string localizedJsonStrings;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -26,9 +26,10 @@ internal static unsafe class StarlightEntrypoint
         public IntPtr AllStringsJson;
         public IntPtr ChainloaderFunc;
         public IntPtr GarbageCollectionFunc;
+        public IntPtr ProfilePath;
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly]
     private static void StartChainloader()
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
@@ -40,7 +41,7 @@ internal static unsafe class StarlightEntrypoint
         IL2CPPChainloader.Instance.Execute();
     }
 
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly]
     private static void GarbageCollection()
     {
         Task.Run(() =>
@@ -52,7 +53,7 @@ internal static unsafe class StarlightEntrypoint
 
     public delegate int StartDelegate(StarlightData* data);
 
-    [UnmanagedCallersOnly(EntryPoint = "Start", CallConvs = [typeof(CallConvCdecl)])]
+    [UnmanagedCallersOnly(EntryPoint = "Start")]
     public static int Start(StarlightData* data)
     {
         Console.SetOut(new StarlightInterop.InteropWriter());
@@ -60,14 +61,13 @@ internal static unsafe class StarlightEntrypoint
 
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
-        localizedJsonStrings = Marshal.PtrToStringAnsi(data->AllStringsJson);
 
         var dotnet = Path.Join(dataPath, "dotnet");
         var bepinPath = Path.Join(dataPath, "BepInEx", "Core");
         var auIl2Cpp = Path.Join(auLibsPath, "libil2cpp.so");
 
-        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&GarbageCollection;
-        data->ChainloaderFunc = (IntPtr)(delegate* unmanaged[Cdecl]<void>)&StartChainloader;
+        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged<void>)&GarbageCollection;
+        data->ChainloaderFunc = (IntPtr)(delegate* unmanaged<void>)&StartChainloader;
 
         // override doorstop env vars cuz we arent using them.
         Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);

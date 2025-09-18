@@ -1,19 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using BepInEx.Preloader.Core;
 using BepInEx.Preloader.Core.Logging;
 using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
 using BepInEx.Unity.IL2CPP.Utils;
 using Il2CppInterop.Runtime.InteropTypes;
-using MonoMod.Utils;
-using UnityEngine;
 using Logger = BepInEx.Logging.Logger;
 
 namespace BepInEx.Unity.IL2CPP;
@@ -62,72 +59,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         base.Initialize(gameExePath);
         Instance = this;
-
-        return;
-
-        var libraryName = PlatformDetection.OS is OSKind.Windows ? "GameAssembly" : "libil2cpp";
-
-        if (!NativeLibrary.TryLoad(libraryName, typeof(IL2CPPChainloader).Assembly, null, out var il2CppHandle))
-        {
-            Logger.Log(LogLevel.Fatal,
-                       "Could not locate Il2Cpp game assembly (GameAssembly.dll, UserAssembly.dll or libil2cpp.so). The game might be obfuscated or use a yet unsupported build of Unity.");
-            return;
-        }
-
-        var runtimeInvokePtr = NativeLibrary.GetExport(il2CppHandle, "il2cpp_runtime_invoke");
-        PreloaderLogger.Log.Log(LogLevel.Debug, $"Runtime invoke pointer: 0x{runtimeInvokePtr.ToInt64():X}");
-        RuntimeInvokeDetourDelegate invokeMethodDetour = OnInvokeMethod;
-
-        RuntimeInvokeDetour = new NativeDetour(runtimeInvokePtr, invokeMethodDetour);
-        originalInvoke = RuntimeInvokeDetour.GenerateTrampoline<RuntimeInvokeDetourDelegate>();
-        PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke patched");
-    }
-
-    private static IntPtr OnInvokeMethod(IntPtr method, IntPtr obj, IntPtr parameters, IntPtr exc)
-    {
-        var methodName = Marshal.PtrToStringAnsi(Il2CppInterop.Runtime.IL2CPP.il2cpp_method_get_name(method));
-
-        var unhook = false;
-
-        if (methodName == "Internal_ActiveSceneChanged")
-        {
-            try
-            {
-                PreloaderLogger.Log.LogInfo("Resetting mono thread.");
-                StarlightInterop.thread_suspend_reload();
-                PreloaderLogger.Log.LogInfo("Mono thread reset.");
-        
-                if (ConfigUnityLogging.Value)
-                {
-                    Logger.Sources.Add(new IL2CPPUnityLogSource());
-
-                    Application.CallLogCallback("Test call after applying unity logging hook", "", LogType.Assert,
-                                                true);
-                }
-
-                unhook = true;
-
-                Il2CppInteropManager.PreloadInteropAssemblies();
-
-                Instance.Execute();
-            }
-            catch (Exception ex)
-            {
-                Logger.Log(LogLevel.Fatal, "Unable to execute IL2CPP chainloader");
-                Logger.Log(LogLevel.Error, ex);
-            }
-        }
-
-        var result = originalInvoke(method, obj, parameters, exc);
-
-        if (unhook)
-        {
-            RuntimeInvokeDetour.Dispose();
-
-            PreloaderLogger.Log.Log(LogLevel.Debug, "Runtime invoke unpatched");
-        }
-
-        return result;
+        // OnInvokeHook is handled by Starlight native patches.
     }
 
     protected override void InitializeLoggers()
@@ -141,14 +73,82 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         Logger.Sources.Add(new IL2CPPLogSource());
     }
 
+    public override void Execute()
+    {
+        try
+        {
+            StarlightInterop.set_loading(true);
+
+            var paths = new List<string> { Paths.PluginPath };
+
+            if (StarlightEntrypoint.ModProfileDirectory != null &&
+                Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
+            {
+                paths.Add(StarlightEntrypoint.ModProfileDirectory);
+            }
+
+            if (StarlightEntrypoint.ProfileData != null)
+            {
+                Logger.Log(LogLevel.Info, "Loading Profile plugins...");
+                var modsPath = Path.Combine(Utility.ParentDirectory(Paths.BepInExRootPath), "starlight_mods");
+                foreach (var (mod, version) in StarlightEntrypoint.ProfileData.Value.mods)
+                {
+                    var versionPath = Path.Combine(modsPath, mod, version);
+                    if (Directory.Exists(versionPath))
+                    {
+                        paths.Add(versionPath);
+                    }
+                    else
+                    {
+                        Logger.Log(LogLevel.Error, "Directory does not exist: " + versionPath);
+                    }
+                }
+            }
+            else
+            {
+                Logger.Log(LogLevel.Warning, "No profile data found, skipping profile plugins.");
+            }
+
+            var plugins = new List<PluginInfo>();
+            foreach (var pluginsPath in paths)
+            {
+                plugins.AddRange(DiscoverPluginsFrom(pluginsPath));
+            }
+            StarlightInterop.set_loading_count(plugins.Count);
+            LoadPlugins(plugins);
+
+            Finish();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                ConsoleManager.CreateConsole();
+            }
+            catch { }
+
+            Logger.Log(LogLevel.Error, $"Error occurred loading plugins: {ex}");
+        }
+        finally
+        {
+            StarlightInterop.set_loading(false);
+        }
+
+        Logger.Log(LogLevel.Message, "Chainloader startup complete");
+    }
+
     public override BasePlugin LoadPlugin(PluginInfo pluginInfo, Assembly pluginAssembly)
     {
+        StarlightInterop.set_loading_text(pluginInfo.Metadata.Name);
+
         var type = pluginAssembly.GetType(pluginInfo.TypeName);
 
         var pluginInstance = (BasePlugin) Activator.CreateInstance(type);
 
         PluginLoad?.Invoke(pluginInfo, pluginAssembly, pluginInstance);
         pluginInstance.Load();
+
+        StarlightInterop.increment_loading();
 
         return pluginInstance;
     }
