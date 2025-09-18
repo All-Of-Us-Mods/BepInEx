@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -54,6 +55,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     ///     Occurs after a plugin is instantiated and just before <see cref="BasePlugin.Load"/> is called.
     /// </summary>
     public event Action<PluginInfo, Assembly, BasePlugin> PluginLoad;
+
+    public static Dictionary<string, string> Translations = [];
 
     public override void Initialize(string gameExePath = null)
     {

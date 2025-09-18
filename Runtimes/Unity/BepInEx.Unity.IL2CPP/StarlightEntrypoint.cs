@@ -9,16 +9,21 @@ using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace BepInEx.Unity.IL2CPP;
 
 internal static unsafe class StarlightEntrypoint
 {
+    private static string localizedJsonStrings;
+
     [StructLayout(LayoutKind.Sequential)]
     public struct StarlightData
     {
         public IntPtr DataPath;
         public IntPtr AuLibsPath;
+        public IntPtr AllStringsJson;
         public IntPtr ChainloaderFunc;
         public IntPtr GarbageCollectionFunc;
     }
@@ -27,6 +32,11 @@ internal static unsafe class StarlightEntrypoint
     private static void StartChainloader()
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+        };
+        IL2CPPChainloader.Translations = JsonSerializer.Deserialize<Dictionary<string, string>>(localizedJsonStrings, options);
         IL2CPPChainloader.Instance.Execute();
     }
 
@@ -50,6 +60,7 @@ internal static unsafe class StarlightEntrypoint
 
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
+        localizedJsonStrings = Marshal.PtrToStringAnsi(data->AllStringsJson);
 
         var dotnet = Path.Join(dataPath, "dotnet");
         var bepinPath = Path.Join(dataPath, "BepInEx", "Core");
