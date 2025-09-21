@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using BepInEx.Bootstrap;
@@ -92,12 +93,19 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                 paths.Add(StarlightEntrypoint.ModProfileDirectory);
             }
 
-            if (StarlightEntrypoint.ProfileData != null)
+            var data = StarlightEntrypoint.ProfileData;
+
+            if (data != null)
             {
                 Logger.Log(LogLevel.Info, "Loading Profile plugins...");
                 var modsPath = Path.Combine(Utility.ParentDirectory(Paths.BepInExRootPath), "starlight_mods");
-                foreach (var (mod, version) in StarlightEntrypoint.ProfileData.Value.mods)
+                foreach (var (mod, version) in data.Value.mods)
                 {
+                    if (data.Value.disabledMods.Contains(mod))
+                    {
+                        continue;
+                    }
+
                     var versionPath = Path.Combine(modsPath, mod, version);
                     if (Directory.Exists(versionPath))
                     {
@@ -117,8 +125,12 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             var plugins = new List<PluginInfo>();
             foreach (var pluginsPath in paths)
             {
-                plugins.AddRange(DiscoverPluginsFrom(pluginsPath));
+                plugins.AddRange(DiscoverPluginsFrom(pluginsPath)
+                                     .Where(plugin => data == null ||
+                                                      !data.Value.disabledMods.Contains(plugin.Metadata.GUID) &&
+                                                      !data.Value.disabledMods.Contains(plugin.Location)));
             }
+
             StarlightInterop.set_loading_count(plugins.Count);
             LoadPlugins(plugins);
 
