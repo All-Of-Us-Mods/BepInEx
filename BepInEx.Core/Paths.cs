@@ -126,6 +126,9 @@ public static class Paths
     internal static void OverridePatcherPluginPath(string patcherPluginPath) =>
         PatcherPluginPath = patcherPluginPath;
 
+    internal static void OverrideConfigPath(string configPath) =>
+        ConfigPath = configPath;
+
     internal static void SetPluginPath(string pluginPath) =>
         PluginPath = Utility.CombinePaths(BepInExRootPath, pluginPath);
 }

@@ -20,8 +20,13 @@ internal static class UnityPreloaderRunner
         if (StarlightEntrypoint.ModProfileDirectory != null) 
         {
             var patcherDir = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "patchers");
+            var configDir = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "config");
+
             Directory.CreateDirectory(patcherDir);
+            Directory.CreateDirectory(configDir);
+
             Paths.OverridePatcherPluginPath(patcherDir);
+            Paths.OverrideConfigPath(configDir);
         }
 
         // Cecil 0.11 requires one to manually set up list of trusted assemblies for assembly resolving
