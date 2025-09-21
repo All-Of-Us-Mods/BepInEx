@@ -53,6 +53,13 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     /// </summary>
     public event Action<PluginInfo, Assembly, BasePlugin> PluginLoad;
 
+    /// <summary>
+    /// A dictionary of translations used in Starlight.
+    /// The <c>key</c> represents the string identifier (e.g. "menu.play").
+    /// The <c>value</c> is the translated text for the currently selected language.
+    /// </summary>
+    public static Dictionary<string, string> Translations = [];
+
     public override void Initialize(string gameExePath = null)
     {
         base.Initialize(gameExePath);
