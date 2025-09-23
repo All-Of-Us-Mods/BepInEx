@@ -1,13 +1,12 @@
+﻿using System.IO;
+using System.Runtime.InteropServices;
+using System;
+using System.Reflection;
+using System.Text.Json;
+using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace BepInEx.Unity.IL2CPP;
 
@@ -15,15 +14,12 @@ internal static unsafe class StarlightEntrypoint
 {
     public static string? ModProfileDirectory { get; private set; }
     public static ModProfileJson? ProfileData { get; private set; }
-    private static string? LocalizedJsonStrings { get; set; }
-
 
     [StructLayout(LayoutKind.Sequential)]
     public struct StarlightData
     {
         public IntPtr DataPath;
         public IntPtr AuLibsPath;
-        public IntPtr AllStringsJson;
         public IntPtr ChainloaderFunc;
         public IntPtr GarbageCollectionFunc;
         public IntPtr ProfilePath;
@@ -33,16 +29,6 @@ internal static unsafe class StarlightEntrypoint
     private static void StartChainloader()
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
-
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-        };
-        if (LocalizedJsonStrings != null)
-        {
-            IL2CPPChainloader.Translations = JsonSerializer.Deserialize<Dictionary<string, string>>(LocalizedJsonStrings, options)!;
-        }
-
         IL2CPPChainloader.Instance.Execute();
     }
 
@@ -67,7 +53,6 @@ internal static unsafe class StarlightEntrypoint
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
         var profilePath = Marshal.PtrToStringAnsi(data->ProfilePath);
-        LocalizedJsonStrings = Marshal.PtrToStringAnsi(data->AllStringsJson);
 
         if (File.Exists(profilePath))
         {
