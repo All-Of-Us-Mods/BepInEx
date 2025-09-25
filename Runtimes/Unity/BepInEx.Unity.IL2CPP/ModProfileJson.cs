@@ -15,6 +15,5 @@ public struct ModProfileJson()
     public string description { get; set; } = "";
     public string thumbnail { get; set; } = "";
     public Dictionary<string, string> mods { get; set; } = new();
-    public List<string> localMods { get; set; } = new();
     public List<string> disabledMods { get; set; } = new();
 }

@@ -80,12 +80,6 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
             var paths = new List<string> { Paths.PluginPath };
 
-            if (StarlightEntrypoint.ModProfileDirectory != null &&
-                Directory.Exists(StarlightEntrypoint.ModProfileDirectory))
-            {
-                paths.Add(StarlightEntrypoint.ModProfileDirectory);
-            }
-
             var data = StarlightEntrypoint.ProfileData;
 
             if (data != null)
