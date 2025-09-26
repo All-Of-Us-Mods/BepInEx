@@ -82,10 +82,10 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
             var data = StarlightEntrypoint.ProfileData;
 
-            if (data != null)
+            if (data != null && StarlightEntrypoint.FilesDirectory != null)
             {
                 Logger.Log(LogLevel.Info, "Loading Profile plugins...");
-                var modsPath = Path.Combine(Utility.ParentDirectory(Paths.BepInExRootPath), "starlight_mods");
+                var modsPath = Path.Combine(StarlightEntrypoint.FilesDirectory, "starlight_mods");
                 foreach (var (mod, version) in data.Value.mods)
                 {
                     if (data.Value.disabledMods.Contains(mod))

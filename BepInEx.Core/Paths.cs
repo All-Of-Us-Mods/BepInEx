@@ -110,6 +110,7 @@ public static class Paths
         GameDataPath = managedPath != null && gameDataRelativeToManaged
                            ? Path.GetDirectoryName(managedPath)
                            : Path.Combine(GameRootPath, $"{ProcessName}_Data");
+
         ManagedPath = managedPath ?? Path.Combine(GameDataPath, "Managed");
         BepInExRootPath = bepinRootPath ?? Path.Combine(GameRootPath, "BepInEx");
         ConfigPath = Path.Combine(BepInExRootPath, "config");

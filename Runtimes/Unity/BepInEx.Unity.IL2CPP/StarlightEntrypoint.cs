@@ -13,16 +13,18 @@ namespace BepInEx.Unity.IL2CPP;
 internal static unsafe class StarlightEntrypoint
 {
     public static string? ModProfileDirectory { get; private set; }
+    public static string? FilesDirectory { get; private set; }
     public static ModProfileJson? ProfileData { get; private set; }
 
     [StructLayout(LayoutKind.Sequential)]
     public struct StarlightData
     {
         public IntPtr DataPath;
+        public IntPtr FilesPath;
         public IntPtr AuLibsPath;
+        public IntPtr ProfilePath;
         public IntPtr ChainloaderFunc;
         public IntPtr GarbageCollectionFunc;
-        public IntPtr ProfilePath;
     }
 
     [UnmanagedCallersOnly]
@@ -53,6 +55,7 @@ internal static unsafe class StarlightEntrypoint
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
         var profilePath = Marshal.PtrToStringAnsi(data->ProfilePath);
+        FilesDirectory = Marshal.PtrToStringAnsi(data->FilesPath);
 
         if (File.Exists(profilePath))
         {
@@ -70,11 +73,9 @@ internal static unsafe class StarlightEntrypoint
 
         // override doorstop env vars cuz we arent using them.
         Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);
-        Environment.SetEnvironmentVariable("DOORSTOP_MANAGED_FOLDER_DIR", dotnet);
         Environment.SetEnvironmentVariable("DOORSTOP_PROCESS_PATH", auIl2Cpp);
         Environment.SetEnvironmentVariable("DOORSTOP_DLL_SEARCH_DIRS", dotnet+Path.PathSeparator+bepinPath);
         Environment.SetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH", auIl2Cpp);
-        Environment.SetEnvironmentVariable("METADATA_PATH", Path.Join(dataPath, "global-metadata.dat"));
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
         var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ?? $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
