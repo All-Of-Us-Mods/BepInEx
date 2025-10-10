@@ -14,8 +14,10 @@ internal static class UnityPreloaderRunner
 
         PlatformUtils.SetPlatform();
 
-        Paths.SetExecutablePath(EnvVars.DOORSTOP_PROCESS_PATH, bepinPath, EnvVars.DOORSTOP_MANAGED_FOLDER_DIR, false,
+        Paths.SetExecutablePath(EnvVars.DOORSTOP_PROCESS_PATH, bepinPath, EnvVars.DOORSTOP_MANAGED_FOLDER_DIR, true,
                                 EnvVars.DOORSTOP_DLL_SEARCH_DIRS);
+
+        Paths.OverrideGameDataPath(EnvVars.DOORSTOP_MANAGED_FOLDER_DIR);
 
         if (StarlightEntrypoint.ModProfileDirectory != null) 
         {

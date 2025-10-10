@@ -130,6 +130,9 @@ public static class Paths
     internal static void OverrideConfigPath(string configPath) =>
         ConfigPath = configPath;
 
+    internal static void OverrideGameDataPath(string gameDataPath) =>
+        GameDataPath = gameDataPath;
+
     internal static void SetPluginPath(string pluginPath) =>
         PluginPath = Utility.CombinePaths(BepInExRootPath, pluginPath);
 }

@@ -73,7 +73,7 @@ internal static unsafe class StarlightEntrypoint
         // override doorstop env vars cuz we arent using them.
         Environment.SetEnvironmentVariable("DOORSTOP_INVOKE_DLL_PATH", Assembly.GetExecutingAssembly().Location);
         Environment.SetEnvironmentVariable("DOORSTOP_PROCESS_PATH", auIl2Cpp);
-        Environment.SetEnvironmentVariable("DOORSTOP_MANAGED_FOLDER_DIR", dotnet);
+        Environment.SetEnvironmentVariable("DOORSTOP_MANAGED_FOLDER_DIR", FilesDirectory);
         Environment.SetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH", auIl2Cpp);
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
