@@ -64,7 +64,6 @@ internal static unsafe class StarlightEntrypoint
             ProfileData = JsonSerializer.Deserialize<ModProfileJson>(profileFile);
         }
 
-        var dotnet = Path.Join(dataPath, "dotnet");
         var auIl2Cpp = Path.Join(auLibsPath, "libil2cpp.so");
 
         data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged<void>)&GarbageCollection;
