@@ -14,7 +14,6 @@ public unsafe class NativeDetour : IDetour
     {
         Target = target;
         Detour = Marshal.GetFunctionPointerForDelegate(detour);
-        Apply();
     }
 
     public void Apply()
