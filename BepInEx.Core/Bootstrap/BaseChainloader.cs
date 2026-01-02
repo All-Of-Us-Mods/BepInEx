@@ -336,7 +336,7 @@ public abstract class BaseChainloader<TPlugin>
         Finished?.Invoke();
     }
 
-    protected IList<PluginInfo> LoadPlugins(IList<PluginInfo> plugins)
+    protected IList<PluginInfo> LoadPlugins(IList<PluginInfo> plugins, Action<PluginInfo, Exception> onPluginLoadError = null)
     {
         var sortedPlugins = ModifyLoadOrder(plugins);
 
@@ -425,6 +425,8 @@ public abstract class BaseChainloader<TPlugin>
 
                 Logger.Log(LogLevel.Error,
                            $"Error loading [{plugin}]: {(ex is ReflectionTypeLoadException re ? TypeLoader.TypeLoadExceptionToString(re) : ex.ToString())}");
+
+                onPluginLoadError(plugin, ex);
             }
         }
 

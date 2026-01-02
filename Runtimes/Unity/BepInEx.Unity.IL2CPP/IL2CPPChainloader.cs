@@ -126,7 +126,11 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             }
 
             StarlightInterop.set_loading_count(plugins.Count);
-            LoadPlugins(plugins);
+            LoadPlugins(plugins, (plugin, ex) =>
+            {
+                StarlightInterop.create_alert($"Failed to load plugin {plugin.Metadata.Name}",
+                    $"An error occurred while loading the plugin {plugin.Metadata.Name} ({plugin.Metadata.GUID}):\n\n{ex}");
+            });
 
             Finish();
         }
@@ -139,6 +143,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             catch { }
 
             Logger.Log(LogLevel.Error, $"Error occurred loading plugins: {ex}");
+            StarlightInterop.create_alert("BepInEx IL2CPP Chainloader Error", $"An error occurred while loading plugins:\n\n{ex}");
         }
         finally
         {

@@ -45,6 +45,13 @@ internal static unsafe class StarlightEntrypoint
         var profilePath = Marshal.PtrToStringAnsi(data->ProfilePath);
         FilesDirectory = Marshal.PtrToStringAnsi(data->FilesPath);
 
+        if (dataPath is null || auLibsPath is null || FilesDirectory is null)
+        {
+            StarlightInterop.create_alert("BepInEx Startup Error", "One or more required paths are null.");
+            StarlightInterop.write_log($"[StarlightEntrypoint] One or more required paths are null. DataPath: {dataPath}, AuLibsPath: {auLibsPath}, FilesDirectory: {FilesDirectory}");
+            return 1;
+        }
+
         if (File.Exists(profilePath))
         {
             using var profileFile = File.OpenRead(profilePath);
@@ -79,6 +86,7 @@ internal static unsafe class StarlightEntrypoint
 
             try
             {
+                StarlightInterop.create_alert("Failed to start BepInEx", $"Check log file for details:\n{silentExceptionLog}");
                 if (PlatformDetection.OS is OSKind.Windows)
                 {
                     MessageBox.Show("Failed to start BepInEx", "BepInEx");

@@ -30,13 +30,16 @@ internal static partial class StarlightInterop
     [LibraryImport(LIBRARY_NAME)]
     public static unsafe partial void increment_loading();
     
+    [LibraryImport(LIBRARY_NAME)]
+    public static unsafe partial void create_alert([MarshalAs(UnmanagedType.LPStr)] string title, [MarshalAs(UnmanagedType.LPStr)] string message);
+    
     public class InteropWriter : TextWriter
     {
         public override Encoding Encoding => Encoding.UTF8; 
 
         private readonly StringBuilder buffer = new(1024);
 
-        public override void WriteLine(string value)
+        public override void WriteLine(string? value)
         {
             buffer.AppendLine(value);
             FlushBuffer();
