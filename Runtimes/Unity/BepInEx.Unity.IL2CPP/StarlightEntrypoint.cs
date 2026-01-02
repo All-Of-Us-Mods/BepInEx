@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 using System;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
 using MonoMod.Utils;
@@ -24,7 +23,6 @@ internal static unsafe class StarlightEntrypoint
         public IntPtr AuLibsPath;
         public IntPtr ProfilePath;
         public IntPtr ChainloaderFunc;
-        public IntPtr GarbageCollectionFunc;
     }
 
     [UnmanagedCallersOnly]
@@ -32,16 +30,6 @@ internal static unsafe class StarlightEntrypoint
     {
         Il2CppInteropManager.PreloadInteropAssemblies();
         IL2CPPChainloader.Instance.Execute();
-    }
-
-    [UnmanagedCallersOnly]
-    private static void GarbageCollection()
-    {
-        Task.Run(() =>
-        {
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Optimized);
-            GC.Collect();
-        });
     }
 
     public delegate int StartDelegate(StarlightData* data);
@@ -66,7 +54,6 @@ internal static unsafe class StarlightEntrypoint
 
         var auIl2Cpp = Path.Join(auLibsPath, "libil2cpp.so");
 
-        data->GarbageCollectionFunc = (IntPtr)(delegate* unmanaged<void>)&GarbageCollection;
         data->ChainloaderFunc = (IntPtr)(delegate* unmanaged<void>)&StartChainloader;
 
         // override doorstop env vars cuz we arent using them.
