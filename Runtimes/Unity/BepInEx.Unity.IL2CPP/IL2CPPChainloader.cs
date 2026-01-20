@@ -121,7 +121,6 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             {
                 plugins.AddRange(DiscoverPluginsFrom(pluginsPath)
                                      .Where(plugin => data == null ||
-                                                      !data.Value.disabledMods.Contains(plugin.Metadata.GUID) &&
                                                       !data.Value.disabledMods.Contains(plugin.Location)));
             }
 
