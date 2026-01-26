@@ -9,7 +9,7 @@ using Cake.Common;
 using Cake.Common.IO;
 using Cake.Common.Tools.DotNet;
 using Cake.Common.Tools.DotNet.Build;
-using Cake.Common.Tools.DotNet.NuGet.Push;
+using Cake.Common.Tools.DotNet.MSBuild;
 using Cake.Core;
 using Cake.Core.Diagnostics;
 using Cake.Core.IO;
@@ -34,10 +34,10 @@ public class BuildContext : FrostingContext
     }
 
     internal readonly DistributionTarget[] Distributions =
-    {
+    [
         new("Unity.IL2CPP", "android-arm64"),
-        new("Unity.IL2CPP", "android-arm"),
-    };
+        new("Unity.IL2CPP", "android-arm")
+    ];
 
 
     public BuildContext(ICakeContext ctx)
@@ -45,7 +45,6 @@ public class BuildContext : FrostingContext
     {
         RootDirectory = ctx.Environment.WorkingDirectory.GetParent();
         OutputDirectory = RootDirectory.Combine("bin");
-        CacheDirectory = OutputDirectory.Combine(".dep_cache");
         DistributionDirectory = OutputDirectory.Combine("dist");
         var props = Project.FromFile(RootDirectory.CombineWithFilePath("Directory.Build.props").FullPath,
                                      new ProjectOptions());
@@ -55,19 +54,14 @@ public class BuildContext : FrostingContext
         BuildType = ctx.Argument("build-type", ProjectBuildType.Development);
         BuildId = ctx.Argument("build-id", -1);
         LastBuildCommit = ctx.Argument("last-build-commit", "");
-        NugetApiKey = ctx.Argument("nuget-api-key", "");
-        NugetSource = ctx.Argument("nuget-source", "https://nuget.bepinex.dev/v3/index.json");
     }
 
     public ProjectBuildType BuildType { get; }
     public int BuildId { get; }
     public string LastBuildCommit { get; }
-    public string NugetApiKey { get; }
-    public string NugetSource { get; }
 
     public DirectoryPath RootDirectory { get; }
     public DirectoryPath OutputDirectory { get; }
-    public DirectoryPath CacheDirectory { get; }
     public DirectoryPath DistributionDirectory { get; }
 
     public string VersionPrefix { get; }
@@ -117,13 +111,13 @@ public sealed class CompileTask : FrostingTask<BuildContext>
         };
         if (ctx.BuildType != BuildContext.ProjectBuildType.Release)
         {
-            buildSettings.MSBuildSettings = new()
+            buildSettings.MSBuildSettings = new DotNetMSBuildSettings
             {
                 VersionSuffix = ctx.VersionSuffix,
                 Properties =
                 {
-                    ["SourceRevisionId"] = new[] { ctx.CurrentCommit.Sha },
-                    ["RepositoryBranch"] = new[] { ctx.GitBranchCurrent(ctx.RootDirectory).FriendlyName }
+                    ["SourceRevisionId"] = [ctx.CurrentCommit.Sha],
+                    ["RepositoryBranch"] = [ctx.GitBranchCurrent(ctx.RootDirectory).FriendlyName]
                 }
             };
         }
@@ -179,28 +173,8 @@ public sealed class MakeDistTask : FrostingTask<BuildContext>
     }
 }
 
-[TaskName("PushNuGet")]
-public sealed class PushNuGetTask : FrostingTask<BuildContext>
-{
-    public override bool ShouldRun(BuildContext ctx) => !string.IsNullOrWhiteSpace(ctx.NugetApiKey) &&
-                                                        ctx.BuildType != BuildContext.ProjectBuildType.Development;
-
-    public override void Run(BuildContext ctx)
-    {
-        var nugetPath = ctx.OutputDirectory.Combine("NuGet");
-        var settings = new DotNetNuGetPushSettings
-        {
-            Source = ctx.NugetSource,
-            ApiKey = ctx.NugetApiKey
-        };
-        foreach (var pkg in ctx.GetFiles(nugetPath.Combine("*.nupkg").FullPath))
-            ctx.DotNetNuGetPush(pkg, settings);
-    }
-}
-
 [TaskName("Publish")]
 [IsDependentOn(typeof(MakeDistTask))]
-[IsDependentOn(typeof(PushNuGetTask))]
 public sealed class PublishTask : FrostingTask<BuildContext>
 {
     public override void Run(BuildContext ctx)
@@ -246,4 +220,4 @@ public sealed class PublishTask : FrostingTask<BuildContext>
 
 [TaskName("Default")]
 [IsDependentOn(typeof(CompileTask))]
-public class DefaultTask : FrostingTask { }
+public class DefaultTask : FrostingTask;
