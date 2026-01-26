@@ -78,6 +78,7 @@ public class BuildContext : FrostingContext
         ProjectBuildType.Release      => "",
         ProjectBuildType.Development  => "dev",
         ProjectBuildType.BleedingEdge => $"be.{BuildId}",
+        ProjectBuildType.Starlight    => $"starlight.{BuildId}",
         var _                         => throw new ArgumentOutOfRangeException()
     };
 
