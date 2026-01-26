@@ -33,6 +33,9 @@ internal static unsafe class StarlightEntrypoint
     }
 
     public delegate int StartDelegate(StarlightData* data);
+    
+    private static string ErrorLogPath { get; set; } = "ErrorLog.log";
+    private static string SilentExceptionLog { get; set; } = $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
 
     [UnmanagedCallersOnly(EntryPoint = "Start")]
     public static int Start(StarlightData* data)
@@ -70,23 +73,39 @@ internal static unsafe class StarlightEntrypoint
         Environment.SetEnvironmentVariable("BEPINEX_GAME_ASSEMBLY_PATH", auIl2Cpp);
 
         // We set it to the current directory first as a fallback, but try to use the same location as the .exe file.
-        var silentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ?? $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
+        SilentExceptionLog = Environment.GetEnvironmentVariable("BEPINEX_PRELOADER_LOG") ??  $"preloader_{DateTime.Now:yyyyMMdd_HHmmss_fff}.log";
+
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+        {
+            try
+            {
+                if (args.ExceptionObject is Exception ex)
+                {
+                    File.WriteAllText(ErrorLogPath, ex.ToString());
+                }
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        };
         
         try
         {
             EnvVars.LoadVars();
 
-            silentExceptionLog = Path.Combine(dataPath, silentExceptionLog);
+            SilentExceptionLog = Path.Combine(FilesDirectory, SilentExceptionLog);
+            ErrorLogPath = Path.Combine(FilesDirectory, ErrorLogPath);
 
             UnityPreloaderRunner.PreloaderMain();
         }
         catch (Exception ex)
         {
-            File.WriteAllText(silentExceptionLog, ex.ToString());
+            File.WriteAllText(SilentExceptionLog, ex.ToString());
 
             try
             {
-                StarlightInterop.create_alert("Failed to start BepInEx", $"Check log file for details:\n{silentExceptionLog}");
+                StarlightInterop.create_alert("Failed to start BepInEx", $"Check log file for details:\n{SilentExceptionLog}");
                 if (PlatformDetection.OS is OSKind.Windows)
                 {
                     MessageBox.Show("Failed to start BepInEx", "BepInEx");
