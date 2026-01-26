@@ -29,31 +29,14 @@ public class BuildContext : FrostingContext
     {
         Release,
         Development,
-        BleedingEdge
+        BleedingEdge,
+        Starlight
     }
-
-    public const string DoorstopVersion = "4.3.0";
-    public const string DotnetRuntimeVersion = "6.0.7";
-    public const string DobbyVersion = "1.0.5";
-
-    public const string DotnetRuntimeZipUrl =
-        $"https://github.com/BepInEx/dotnet-runtime/releases/download/{DotnetRuntimeVersion}/mini-coreclr-Release.zip";
 
     internal readonly DistributionTarget[] Distributions =
     {
-        new("Unity.Mono", "win-x86"),
-        new("Unity.Mono", "win-x64"),
-        new("Unity.Mono", "linux-x86"),
-        new("Unity.Mono", "linux-x64"),
-        new("Unity.Mono", "macos-x64"),
-        new("Unity.IL2CPP", "win-x86"),
-        new("Unity.IL2CPP", "win-x64"),
-        new("Unity.IL2CPP", "linux-x64"),
-        new("Unity.IL2CPP", "macos-x64"),
-        new("NET.Framework", "win-x86", "net40"),
-        new("NET.Framework", "win-x86", "net452"),
-        new("NET.CoreCLR", "win-x64", "netcoreapp3.1"),
-        new("NET.CoreCLR", "win-x64", "net6.0")
+        new("Unity.IL2CPP", "android-arm64"),
+        new("Unity.IL2CPP", "android-arm"),
     };
 
 
@@ -104,12 +87,6 @@ public class BuildContext : FrostingContext
             ProjectBuildType.Release => "",
             var _                    => $"-{VersionSuffix}+{this.GitShortenSha(RootDirectory, CurrentCommit)}",
         };
-
-    public static string DoorstopZipUrl(string arch) =>
-        $"https://github.com/NeighTools/UnityDoorstop/releases/download/v{DoorstopVersion}/doorstop_{arch}_release_{DoorstopVersion}.zip";
-
-    public static string DobbyZipUrl(string arch) =>
-        $"https://github.com/BepInEx/Dobby/releases/download/v{DobbyVersion}/dobby-{arch}.zip";
 }
 
 [TaskName("Clean")]
@@ -154,61 +131,8 @@ public sealed class CompileTask : FrostingTask<BuildContext>
     }
 }
 
-[TaskName("DownloadDependencies")]
-public sealed class DownloadDependenciesTask : FrostingTask<BuildContext>
-{
-    public override void Run(BuildContext ctx)
-    {
-        ctx.Log.Information("Downloading dependencies");
-        ctx.CreateDirectory(ctx.CacheDirectory);
-
-        var cache = new DependencyCache(ctx, ctx.CacheDirectory.CombineWithFilePath("cache.json"));
-
-        cache.Refresh("NeighTools/UnityDoorstop", BuildContext.DoorstopVersion, () =>
-        {
-            ctx.Log.Information($"Downloading Doorstop {BuildContext.DoorstopVersion}");
-            var doorstopDir = ctx.CacheDirectory.Combine("doorstop");
-            ctx.CreateDirectory(doorstopDir);
-            ctx.CleanDirectory(doorstopDir);
-            var archs = new[] { "win", "linux", "macos" };
-            var versions = archs
-                           .Select(a => ($"Doorstop ({a})",
-                                         BuildContext.DoorstopZipUrl(a),
-                                         doorstopDir.Combine($"doorstop_{a}")))
-                           .ToArray();
-            ctx.DownloadZipFiles($"Doorstop {BuildContext.DoorstopVersion}", versions);
-        });
-
-        cache.Refresh("BepInEx/Dobby", BuildContext.DobbyVersion, () =>
-        {
-            ctx.Log.Information($"Downloading Dobby {BuildContext.DobbyVersion}");
-            var dobbyDir = ctx.CacheDirectory.Combine("dobby");
-            ctx.CreateDirectory(dobbyDir);
-            ctx.CleanDirectory(dobbyDir);
-            var archs = new[] { "win", "linux", "macos" };
-            var versions = archs
-                           .Select(a => ($"Dobby ({a})", BuildContext.DobbyZipUrl(a), dobbyDir.Combine($"dobby_{a}")))
-                           .ToArray();
-            ctx.DownloadZipFiles($"Dobby {BuildContext.DobbyVersion}", versions);
-        });
-
-        cache.Refresh("BepInEx/dotnet_runtime", BuildContext.DotnetRuntimeVersion, () =>
-        {
-            ctx.Log.Information($"Downloading dotnet runtime {BuildContext.DotnetRuntimeVersion}");
-            var dotnetDir = ctx.CacheDirectory.Combine("dotnet");
-            ctx.CreateDirectory(dotnetDir);
-            ctx.CleanDirectory(dotnetDir);
-            ctx.DownloadZipFiles($"dotnet-runtime {BuildContext.DotnetRuntimeVersion}",
-                                 ("dotnet runtime", BuildContext.DotnetRuntimeZipUrl, dotnetDir));
-        });
-
-        cache.Save();
-    }
-}
-
 [TaskName("MakeDist")]
 [IsDependentOn(typeof(CompileTask))]
-[IsDependentOn(typeof(DownloadDependenciesTask))]
 public sealed class MakeDistTask : FrostingTask<BuildContext>
 {
     public override void Run(BuildContext ctx)
@@ -250,49 +174,6 @@ public sealed class MakeDistTask : FrostingTask<BuildContext>
 
             foreach (var filePath in ctx.GetFiles(sourceDirectory.Combine("*.*").FullPath))
                 ctx.CopyFileToDirectory(filePath, bepInExCoreDir);
-
-            if (dist.Engine == "Unity")
-            {
-                var doorstopPath =
-                    ctx.CacheDirectory.Combine("doorstop").Combine($"doorstop_{dist.Os}").Combine(dist.Arch);
-                foreach (var filePath in ctx.GetFiles(doorstopPath.Combine($"*.{dist.DllExtension}").FullPath))
-                    ctx.CopyFileToDirectory(filePath, targetDir);
-                ctx.CopyFileToDirectory(doorstopPath.CombineWithFilePath(".doorstop_version"), targetDir);
-                var (doorstopConfigFile, doorstopConfigDistName) = dist.Os switch
-                {
-                    "win" => ($"doorstop_config_{dist.Runtime.ToLower()}.ini",
-                              "doorstop_config.ini"),
-                    "linux" or "macos" => ($"run_bepinex_{dist.Runtime.ToLower()}.sh",
-                                           "run_bepinex.sh"),
-                    var _ => throw new
-                                 NotSupportedException(
-                                                       $"Doorstop is not supported on {dist.Os}")
-                };
-                ctx.CopyFile(ctx.RootDirectory.Combine("Runtimes").Combine("Unity").Combine("Doorstop").CombineWithFilePath(doorstopConfigFile),
-                             targetDir.CombineWithFilePath(doorstopConfigDistName));
-
-                if (dist.Runtime == "IL2CPP")
-                {
-                    ctx.CopyFile(ctx.CacheDirectory.Combine("dobby").Combine($"dobby_{dist.Os}").CombineWithFilePath($"{dist.DllPrefix}dobby_{dist.Arch}.{dist.DllExtension}"),
-                                 bepInExCoreDir.CombineWithFilePath($"{dist.DllPrefix}dobby.{dist.DllExtension}"));
-                    ctx.CopyDirectory(ctx.CacheDirectory.Combine("dotnet").Combine(dist.RuntimeIdentifier),
-                                      targetDir.Combine("dotnet"));
-                }
-            }
-            else if (dist.Engine == "NET")
-            {
-                if (dist.Runtime == "Framework")
-                {
-                    ctx.DeleteFile(bepInExCoreDir.CombineWithFilePath("BepInEx.NET.Framework.Launcher.exe.config"));
-
-                    ctx.MoveFileToDirectory(bepInExCoreDir.CombineWithFilePath("BepInEx.NET.Framework.Launcher.exe"), targetDir);
-                }
-                else if (dist.Runtime == "CoreCLR")
-                {
-                    foreach (var filePath in ctx.GetFiles(bepInExCoreDir.Combine("BepInEx.NET.CoreCLR.*").FullPath))
-                        ctx.MoveFileToDirectory(filePath, targetDir);
-                }
-            }
         }
     }
 }
