@@ -78,13 +78,16 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         {
             StarlightInterop.set_loading(true);
 
-            var paths = new List<string> { Paths.PluginPath };
+            var paths = new Dictionary<string, bool>
+            {
+                { Paths.PluginPath, true }
+            };
 
             if (StarlightEntrypoint.ModProfileDirectory != null)
             {
                 var path = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "localMods");
                 Directory.CreateDirectory(path);
-                paths.Add(path);
+                paths.Add(path, false);
             }
 
             var data = StarlightEntrypoint.ProfileData;
@@ -103,7 +106,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                     var versionPath = Path.Combine(modsPath, mod, version);
                     if (Directory.Exists(versionPath))
                     {
-                        paths.Add(versionPath);
+                        paths.Add(versionPath, true);
                     }
                     else
                     {
@@ -119,9 +122,18 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             var plugins = new List<PluginInfo>();
             foreach (var pluginsPath in paths)
             {
-                plugins.AddRange(DiscoverPluginsFrom(pluginsPath)
-                                     .Where(plugin => data == null ||
-                                                      !data.Value.disabledMods.Contains(plugin.Location)));
+                var trusted = pluginsPath.Value;
+
+                plugins.AddRange(
+                    DiscoverPluginsFrom(pluginsPath.Key)
+                        .Where(plugin => data == null ||
+                                         !data.Value.disabledMods.Contains(plugin.Location))
+                        .Select(plugin =>
+                        {
+                            plugin.Trusted = trusted;
+                            return plugin;
+                        })
+                );
             }
 
             StarlightInterop.set_loading_count(plugins.Count);

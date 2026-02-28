@@ -1,14 +1,17 @@
-﻿using System;
+using BepInEx.Configuration;
+using BepInEx.Logging;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
+using MonoMod.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
-using BepInEx.Configuration;
-using BepInEx.Logging;
-using Mono.Cecil;
 
 namespace BepInEx.Bootstrap;
 
@@ -408,6 +411,11 @@ public abstract class BaseChainloader<TPlugin>
             {
                 Logger.Log(LogLevel.Info, $"Loading [{plugin}]");
 
+                if (!plugin.Trusted && !IsAssemblySafe(plugin.Location))
+                {
+                    throw new SecurityException($"Plugin '{plugin.Metadata.Name}' failed security validation. It contains blacklisted instructions or unsafe code.");
+                }
+
                 if (!loadedAssemblies.TryGetValue(plugin.Location, out var ass))
                     loadedAssemblies[plugin.Location] = ass = Assembly.LoadFrom(plugin.Location);
 
@@ -461,6 +469,49 @@ public abstract class BaseChainloader<TPlugin>
         {
             Logger.Log(LogLevel.Warning,
                        $"Couldn't run Module constructor for {assembly.FullName}::{plugin.TypeName}: {e}");
+        }
+    }
+
+    private static bool IsAssemblySafe(string assemblyPath)
+    {
+        try
+        {
+            using var module = ModuleDefinition.ReadModule(assemblyPath);
+            foreach (var type in module.Types)
+            {
+                foreach (var method in type.Methods)
+                {
+                    if (method.IsPInvokeImpl)
+                    {
+                        return false;
+                    }
+
+                    if (module.Attributes.Has(ModuleAttributes.ILOnly) == false)
+                    {
+                        return false;
+                    }
+
+                    if (!method.HasBody) continue;
+
+                    foreach (var instruction in method.Body.Instructions)
+                    {
+                        if (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
+                        {
+                            if (instruction.Operand is MethodReference methodRef)
+                            {
+                                var fullName = methodRef.FullName;
+
+                                if (fullName.Contains("System.Reflection.Assembly::Load")) return false;
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
         }
     }
 
