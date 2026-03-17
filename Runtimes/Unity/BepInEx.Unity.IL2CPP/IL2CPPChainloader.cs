@@ -95,12 +95,22 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                 var modsPath = Path.Combine(StarlightEntrypoint.FilesDirectory, "starlight_mods");
                 foreach (var (mod, version) in data.Value.mods)
                 {
+                    // Old versions would use the mod ID as a disabled key
                     if (data.Value.disabledMods.Contains(mod))
                     {
+                        Logger.Log(LogLevel.Info, "Skipping disabled mod: " + mod);
                         continue;
                     }
 
                     var versionPath = Path.Combine(modsPath, mod, version);
+
+                    // New versions use the folder path as a disabled key, so check that as well
+                    if (data.Value.disabledMods.Contains(versionPath))
+                    {
+                        Logger.Log(LogLevel.Info, "Skipping disabled mod: " + versionPath);
+                        continue;
+                    }
+
                     if (Directory.Exists(versionPath))
                     {
                         paths.Add(versionPath);
@@ -119,9 +129,17 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             var plugins = new List<PluginInfo>();
             foreach (var pluginsPath in paths)
             {
-                plugins.AddRange(DiscoverPluginsFrom(pluginsPath)
-                                     .Where(plugin => data == null ||
-                                                      !data.Value.disabledMods.Contains(plugin.Location)));
+                foreach (var plugin in DiscoverPluginsFrom(pluginsPath))
+                {
+                    // Skip plugins from disabled mod list. This uses full file path.
+                    if (data != null && data.Value.disabledMods.Contains(plugin.Location))
+                    {
+                        Logger.Log(LogLevel.Info, "Skipping disabled plugin: " + plugin.Metadata.Name);
+                        continue;
+                    }
+
+                    plugins.Add(plugin);
+                }
             }
 
             StarlightInterop.set_loading_count(plugins.Count);
