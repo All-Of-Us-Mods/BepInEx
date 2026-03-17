@@ -64,7 +64,7 @@ public static class UnityInfo
         // TODO: do not assume among us
         if (PlatformDetection.OS is OSKind.Android)
         {
-            Version = new UnityVersion(2022, 3, 43, UnityVersionType.Final, 1);
+            Version = new UnityVersion(2022, 3, 44, UnityVersionType.Final, 1);
             return;
         }
         
