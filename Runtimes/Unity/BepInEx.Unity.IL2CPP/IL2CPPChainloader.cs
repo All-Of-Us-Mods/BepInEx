@@ -78,13 +78,16 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
         {
             StarlightInterop.set_loading(true);
 
-            var paths = new List<string> { Paths.PluginPath };
+            var paths = new Dictionary<string, bool>
+            {
+                { Paths.PluginPath, true }
+            };
 
             if (StarlightEntrypoint.ModProfileDirectory != null)
             {
                 var path = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "localMods");
                 Directory.CreateDirectory(path);
-                paths.Add(path);
+                paths.Add(path, false);
             }
 
             var data = StarlightEntrypoint.ProfileData;
@@ -113,7 +116,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
                     if (Directory.Exists(versionPath))
                     {
-                        paths.Add(versionPath);
+                        paths.Add(versionPath, true);
                     }
                     else
                     {
@@ -129,17 +132,18 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             var plugins = new List<PluginInfo>();
             foreach (var pluginsPath in paths)
             {
-                foreach (var plugin in DiscoverPluginsFrom(pluginsPath))
-                {
-                    // Skip plugins from disabled mod list. This uses full file path.
-                    if (data != null && data.Value.disabledMods.Contains(plugin.Location))
-                    {
-                        Logger.Log(LogLevel.Info, "Skipping disabled plugin: " + plugin.Metadata.Name);
-                        continue;
-                    }
+                var trusted = pluginsPath.Value;
 
-                    plugins.Add(plugin);
-                }
+                plugins.AddRange(
+                    DiscoverPluginsFrom(pluginsPath.Key)
+                        .Where(plugin => data == null ||
+                                         !data.Value.disabledMods.Contains(plugin.Location))
+                        .Select(plugin =>
+                        {
+                            plugin.Trusted = trusted;
+                            return plugin;
+                        })
+                );
             }
 
             StarlightInterop.set_loading_count(plugins.Count);

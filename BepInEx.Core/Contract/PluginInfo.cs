@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,6 +44,8 @@ public class PluginInfo : ICacheable
     public object Instance { get; internal set; }
 
     public string TypeName { get; internal set; }
+
+    public bool Trusted { get; internal set; }
 
     internal Version TargettedBepInExVersion { get; set; }
 
