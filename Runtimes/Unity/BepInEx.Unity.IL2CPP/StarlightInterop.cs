@@ -13,7 +13,7 @@ internal static partial class StarlightInterop
     public static unsafe partial void write_log([MarshalAs(UnmanagedType.LPStr)] string message);
 
     [LibraryImport(LIBRARY_NAME)]
-    public static unsafe partial IntPtr hook(IntPtr target, IntPtr detour);
+    public static unsafe partial IntPtr hook(IntPtr target, IntPtr detour, [MarshalAs(UnmanagedType.I1)] bool unityFunction);
 
     [LibraryImport(LIBRARY_NAME)]
     public static unsafe partial void unhook(IntPtr target);

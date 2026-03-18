@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using Il2CppInterop.Runtime.Injection;
 
@@ -8,12 +8,19 @@ public unsafe class NativeDetour : IDetour
 {
     public IntPtr Target { get; }
     public IntPtr Detour { get; }
+    public bool UnityFunction { get; }
     public IntPtr OriginalTrampoline { get; private set; }
 
     public NativeDetour(IntPtr target, Delegate detour)
+        : this(target, detour, false)
+    {
+    }
+
+    public NativeDetour(IntPtr target, Delegate detour, bool unityFunction)
     {
         Target = target;
         Detour = Marshal.GetFunctionPointerForDelegate(detour);
+        UnityFunction = unityFunction;
         Apply();
     }
 
@@ -23,7 +30,7 @@ public unsafe class NativeDetour : IDetour
         {
             return;
         }
-        OriginalTrampoline = StarlightInterop.hook(Target, Detour);
+        OriginalTrampoline = StarlightInterop.hook(Target, Detour, UnityFunction);
     }
     
     public void Dispose()
