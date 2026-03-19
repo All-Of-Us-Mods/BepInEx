@@ -11,6 +11,7 @@ using BepInEx.Preloader.Core.Logging;
 using BepInEx.Unity.IL2CPP.Hook;
 using BepInEx.Unity.IL2CPP.Logging;
 using BepInEx.Unity.IL2CPP.Utils;
+using Il2CppInterop.HarmonySupport;
 using Il2CppInterop.Runtime.InteropTypes;
 using Logger = BepInEx.Logging.Logger;
 
@@ -76,6 +77,8 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
     {
         try
         {
+            BridgeInterop.Initialize();
+            StarlightInterop.init_bridge_helper(BridgeInterop.LibraryPath);
             StarlightInterop.set_loading(true);
 
             var paths = new Dictionary<string, bool>
