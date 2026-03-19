@@ -486,10 +486,11 @@ public abstract class BaseChainloader<TPlugin>
                         return false;
                     }
 
-                    if (module.Attributes.Has(ModuleAttributes.ILOnly) == false)
+                    // TODO: better unsafe blocking
+                    /*if (!module.Attributes.Has(ModuleAttributes.ILOnly))
                     {
                         return false;
-                    }
+                    }*/
 
                     if (!method.HasBody) continue;
 
