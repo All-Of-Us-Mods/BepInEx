@@ -486,10 +486,12 @@ public abstract class BaseChainloader<TPlugin>
                         return false;
                     }
 
+                    // TODO: find a better way to detect malicious unsafe
+                    /*
                     if (module.Attributes.Has(ModuleAttributes.ILOnly) == false)
                     {
                         return false;
-                    }
+                    }*/
 
                     if (!method.HasBody) continue;
 
