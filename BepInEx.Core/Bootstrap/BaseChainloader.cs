@@ -502,7 +502,7 @@ public abstract class BaseChainloader<TPlugin>
                             {
                                 var fullName = methodRef.FullName;
 
-                                if (fullName.Contains("System.Reflection.Assembly::Load")) return false;
+                                //if (fullName.Contains("System.Reflection.Assembly::Load")) return false;
                             }
                         }
                     }
