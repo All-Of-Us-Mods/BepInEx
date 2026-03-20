@@ -474,6 +474,11 @@ public abstract class BaseChainloader<TPlugin>
 
     private static bool IsAssemblySafe(string assemblyPath)
     {
+        var whitelistedDllImports = new Dictionary<string, List<string>> {
+            ["user32.dll"] = [
+                "GetForegroundWindow", "MessageBox"
+            ]
+        };
         try
         {
             using var module = ModuleDefinition.ReadModule(assemblyPath);
@@ -483,7 +488,12 @@ public abstract class BaseChainloader<TPlugin>
                 {
                     if (method.IsPInvokeImpl)
                     {
-                        return false;
+                        var dllName = method.PInvokeInfo.Module.Name.ToLowerInvariant();
+                        if (!whitelistedDllImports.TryGetValue(dllName, out var whitelistedMethods) ||
+                            !whitelistedMethods.Contains(method.Name))
+                        {
+                            return false;
+                        }
                     }
 
                     // TODO: better unsafe blocking
