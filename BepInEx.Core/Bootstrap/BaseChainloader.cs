@@ -477,7 +477,8 @@ public abstract class BaseChainloader<TPlugin>
         var whitelistedDllImports = new Dictionary<string, List<string>> {
             ["user32.dll"] = [
                 "GetForegroundWindow", "MessageBox"
-            ]
+            ],
+            ["winmm.dll"] = [ "*" ]
         };
         try
         {
@@ -489,10 +490,12 @@ public abstract class BaseChainloader<TPlugin>
                     if (method.IsPInvokeImpl)
                     {
                         var dllName = method.PInvokeInfo.Module.Name.ToLowerInvariant();
-                        if (!whitelistedDllImports.TryGetValue(dllName, out var whitelistedMethods) ||
-                            !whitelistedMethods.Contains(method.Name))
+                        if (whitelistedDllImports.TryGetValue(dllName, out var whitelistedMethods))
                         {
-                            return false;
+                            if (!whitelistedMethods.Contains("*") && !whitelistedMethods.Contains(method.Name))
+                            {
+                                return false;
+                            }
                         }
                     }
 
