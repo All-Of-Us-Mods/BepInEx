@@ -16,8 +16,7 @@ internal static partial class StarlightInterop
     public static unsafe partial void init_bridge_helper([MarshalAs(UnmanagedType.LPStr)] string bridgeLibPath);
 
     [LibraryImport(LIBRARY_NAME)]
-    public static unsafe partial IntPtr hook(IntPtr target, IntPtr detour, 
-                                             [MarshalAs(UnmanagedType.I1)] bool unityFunction,  
+    public static unsafe partial IntPtr hook(IntPtr target, IntPtr detour,
                                              [MarshalAs(UnmanagedType.I1)] bool specialReturnBuffer);
 
     [LibraryImport(LIBRARY_NAME)]

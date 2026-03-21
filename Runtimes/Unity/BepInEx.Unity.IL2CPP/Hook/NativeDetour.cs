@@ -8,20 +8,18 @@ public unsafe class NativeDetour : IDetour
 {
     public IntPtr Target { get; }
     public IntPtr Detour { get; }
-    public bool UnityFunction { get; }
     public bool SpecialReturnBuffer { get; }
     public IntPtr OriginalTrampoline { get; private set; }
 
     public NativeDetour(IntPtr target, Delegate detour)
-        : this(target, detour, false, false)
+        : this(target, detour, false)
     {
     }
 
-    public NativeDetour(IntPtr target, Delegate detour, bool unityFunction, bool specialReturnBuffer)
+    public NativeDetour(IntPtr target, Delegate detour, bool specialReturnBuffer)
     {
         Target = target;
         Detour = Marshal.GetFunctionPointerForDelegate(detour);
-        UnityFunction = unityFunction;
         SpecialReturnBuffer = specialReturnBuffer;
         Apply();
     }
@@ -32,7 +30,7 @@ public unsafe class NativeDetour : IDetour
         {
             return;
         }
-        OriginalTrampoline = StarlightInterop.hook(Target, Detour, UnityFunction, SpecialReturnBuffer);
+        OriginalTrampoline = StarlightInterop.hook(Target, Detour, SpecialReturnBuffer);
     }
     
     public void Dispose()
