@@ -478,7 +478,8 @@ public abstract class BaseChainloader<TPlugin>
             ["user32.dll"] = [
                 "GetForegroundWindow", "MessageBox"
             ],
-            ["winmm.dll"] = [ "*" ]
+            ["winmm.dll"] = [ "*" ],
+            ["libstarlight.so"] = [ "*" ]
         };
         try
         {
