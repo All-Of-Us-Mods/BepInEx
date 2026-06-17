@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using BepInEx.Logging;
 using MonoMod.Utils;
@@ -71,7 +72,7 @@ public static class ChainloaderLogHelper
 
         // Not sure what it does on Linux. I think it returns the kernel version there too, but we already get the utsname structure from SetPlatform() regardless
 
-        if (PlatformDetection.OS is OSKind.Windows)
+        if (PlatformDetection.OS.Has(OSKind.Windows))
         {
             osVersion = PlatformUtils.WindowsVersion;
 
@@ -94,10 +95,10 @@ public static class ChainloaderLogHelper
             else if (osVersion.Major <= 5)
                 builder.Append("XP");
 
-            if (PlatformDetection.OS is OSKind.Wine)
+            if (PlatformDetection.OS.Has(OSKind.Wine))
                 builder.AppendFormat(" (Wine {0})", PlatformUtils.WineVersion);
         }
-        else if (PlatformDetection.OS is OSKind.OSX)
+        else if (PlatformDetection.OS.Has(OSKind.OSX))
         {
             builder.Append("macOS ");
 
@@ -113,7 +114,7 @@ public static class ChainloaderLogHelper
                 builder.AppendFormat("Unknown (kernel {0})", osVersion);
             }
         }
-        else if (PlatformDetection.OS is OSKind.Linux)
+        else if (PlatformDetection.OS.Has(OSKind.Linux))
         {
             builder.Append("Linux");
 
@@ -123,18 +124,18 @@ public static class ChainloaderLogHelper
             }
         }
 
-        builder.Append(PlatformDetection.Architecture is ArchitectureKind.Bits64 ? " 64-bit" : " 32-bit");
+        builder.Append(PlatformDetection.Architecture.Has(ArchitectureKind.Bits64) ? " 64-bit" : " 32-bit");
 
-        if (PlatformDetection.OS is OSKind.Android)
+        if (PlatformDetection.OS.Has(OSKind.Android))
         {
             builder.Append(" Android");
         }
 
-        if (PlatformDetection.Architecture is ArchitectureKind.Arm)
+        if (PlatformDetection.Architecture.Has(ArchitectureKind.Arm))
         {
             builder.Append(" ARM");
 
-            if (PlatformDetection.Architecture is ArchitectureKind.Arm64)
+            if (PlatformDetection.Architecture.Has(ArchitectureKind.Arm64))
                 builder.Append("64");
         }
 
