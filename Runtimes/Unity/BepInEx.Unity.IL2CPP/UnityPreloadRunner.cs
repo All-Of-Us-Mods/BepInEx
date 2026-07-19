@@ -21,13 +21,10 @@ internal static class UnityPreloaderRunner
 
         if (StarlightEntrypoint.ModProfileDirectory != null) 
         {
-            var patcherDir = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "patchers");
             var configDir = Path.Combine(StarlightEntrypoint.ModProfileDirectory, "config");
 
-            Directory.CreateDirectory(patcherDir);
             Directory.CreateDirectory(configDir);
 
-            Paths.OverridePatcherPluginPath(patcherDir);
             Paths.OverrideConfigPath(configDir);
         }
 
@@ -52,8 +49,8 @@ internal static class UnityPreloaderRunner
         if (foundAssembly != null)
             return foundAssembly;
 
-        if (Utility.TryResolveDllAssembly(assemblyName, Paths.BepInExAssemblyDirectory, out foundAssembly)
-         || Utility.TryResolveDllAssembly(assemblyName, Paths.PatcherPluginPath, out foundAssembly)
+        if (RepositoryPluginValidator.TryResolve(assemblyName, out foundAssembly)
+         || Utility.TryResolveDllAssembly(assemblyName, Paths.BepInExAssemblyDirectory, out foundAssembly)
          || Utility.TryResolveDllAssembly(assemblyName, Paths.PluginPath, out foundAssembly))
             return foundAssembly;
 

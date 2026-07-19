@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -85,6 +86,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
             {
                 { Paths.PluginPath, true }
             };
+            var repositoryPaths = new List<string>();
 
             if (StarlightEntrypoint.ModProfileDirectory != null)
             {
@@ -119,7 +121,7 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
 
                     if (Directory.Exists(versionPath))
                     {
-                        paths.Add(versionPath, true);
+                        repositoryPaths.Add(versionPath);
                     }
                     else
                     {
@@ -144,6 +146,44 @@ public class IL2CPPChainloader : BaseChainloader<BasePlugin>
                         .Select(plugin =>
                         {
                             plugin.Trusted = trusted;
+                            return plugin;
+                        })
+                );
+            }
+
+            if (repositoryPaths.Count > 0)
+            {
+                var repositoryRoot = Path.Combine(StarlightEntrypoint.FilesDirectory!, "starlight_mods");
+                RepositoryPluginValidator.Initialize(repositoryRoot);
+            }
+
+            var validatedRepositoryPaths = repositoryPaths
+                .Select(RepositoryPluginValidator.ValidateDirectory)
+                .ToList();
+
+            foreach (var repositoryPath in validatedRepositoryPaths)
+            {
+                foreach (var assemblyPath in repositoryPath.AllowedFiles)
+                {
+                    if (!IsAssemblySafe(assemblyPath))
+                        throw new SecurityException(
+                            $"Repository assembly failed native-call safety validation: '{assemblyPath}'");
+                }
+            }
+
+            if (!StarlightInterop.refresh_mod_integrity_baseline())
+                throw new InvalidOperationException("Failed to refresh the native mod integrity baseline");
+
+            foreach (var repositoryPath in validatedRepositoryPaths)
+            {
+                plugins.AddRange(
+                    DiscoverPluginsFrom(repositoryPath.LoadDirectory)
+                        .Where(plugin => repositoryPath.AllowedFiles.Contains(Path.GetFullPath(plugin.Location)))
+                        .Where(plugin => data == null ||
+                                         !data.Value.disabledMods.Contains(plugin.Location))
+                        .Select(plugin =>
+                        {
+                            plugin.Trusted = true;
                             return plugin;
                         })
                 );

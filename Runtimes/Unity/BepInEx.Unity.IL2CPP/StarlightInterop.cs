@@ -33,6 +33,19 @@ internal static partial class StarlightInterop
 
     [LibraryImport(LIBRARY_NAME)]
     public static unsafe partial void increment_loading();
+
+    [LibraryImport(LIBRARY_NAME)]
+    [return: MarshalAs(UnmanagedType.I1)]
+    public static unsafe partial bool refresh_mod_integrity_baseline();
+
+    [LibraryImport(LIBRARY_NAME, EntryPoint = "get_repository_mod_allowlist")]
+    private static partial IntPtr get_repository_mod_allowlist();
+
+    public static string GetRepositoryModAllowlist()
+    {
+        var pointer = get_repository_mod_allowlist();
+        return pointer == IntPtr.Zero ? string.Empty : Marshal.PtrToStringUTF8(pointer) ?? string.Empty;
+    }
     
     [LibraryImport(LIBRARY_NAME)]
     public static unsafe partial void create_alert([MarshalAs(UnmanagedType.LPStr)] string title, [MarshalAs(UnmanagedType.LPStr)] string message);
