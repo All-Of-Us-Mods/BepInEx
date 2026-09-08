@@ -496,7 +496,16 @@ public abstract class BaseChainloader<TPlugin>
                 "starlight_voice_get_sample_rate",
                 "starlight_voice_get_buffer_frames",
                 "starlight_voice_get_last_error"
-            ]
+            ],
+            ["llama"] =
+            [
+                "*"
+            ],
+            ["ggml"] =
+            [
+                "ggml_backend_load",
+                "ggml_backend_load_all"
+            ],
         };
         try
         {
