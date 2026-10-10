@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using BepInEx.Preloader.Core;
 using BepInEx.Unity.IL2CPP.Utils;
+using Mono.Cecil;
 using MonoMod.Utils;
 
 namespace BepInEx.Unity.IL2CPP;
@@ -42,6 +43,34 @@ internal static unsafe class StarlightEntrypoint
     {
         Console.SetOut(new StarlightInterop.InteropWriter());
         Console.SetError(new StarlightInterop.InteropWriter());
+        try
+        {
+            File.Delete(ErrorLogPath);
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
+
+        AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
+        {
+            if (e.Exception is AssemblyResolutionException)
+            {
+                // ignore
+                StarlightInterop.write_log(e.Exception.ToString());
+                return;
+            }
+
+            var message = e.Exception.GetType() + ": " + e.Exception.Message + "\n" + Environment.StackTrace;
+            try
+            {
+                File.AppendAllText(ErrorLogPath, message);
+            }
+            catch (Exception)
+            {
+                // ignored
+            }
+        };
 
         var dataPath = Marshal.PtrToStringAnsi(data->DataPath);
         var auLibsPath = Marshal.PtrToStringAnsi(data->AuLibsPath);
