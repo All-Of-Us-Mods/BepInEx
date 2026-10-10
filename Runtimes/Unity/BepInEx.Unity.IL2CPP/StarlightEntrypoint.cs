@@ -64,6 +64,7 @@ internal static unsafe class StarlightEntrypoint
             var message = e.Exception.GetType() + ": " + e.Exception.Message + "\n" + Environment.StackTrace;
             try
             {
+                StarlightInterop.write_log(message);
                 File.AppendAllText(ErrorLogPath, message);
             }
             catch (Exception)
