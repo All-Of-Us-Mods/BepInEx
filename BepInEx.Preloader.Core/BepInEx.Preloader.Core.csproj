@@ -10,6 +10,6 @@
         <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All"/>
         <PackageReference Include="HarmonyX" Version="2.13.0" />
         <PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.7-star" />
-        <PackageReference Include="MonoMod.Utils" Version="25.0.15-star" />
+        <PackageReference Include="MonoMod.Utils" Version="25.0.15-alpha.dev" />
     </ItemGroup>
 </Project>
